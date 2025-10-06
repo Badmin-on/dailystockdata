@@ -1,0 +1,18 @@
+
+> yoonstock-web@1.0.0 migrate
+> node scripts/migrate-to-supabase.js
+
+🚀 YoonStock 데이터 마이그레이션 시작
+
+📂 소스 폴더: C:\alexDB\results
+📦 총 61개 파일 발견
+
+
+📁 처리 중: stock_2025-07-09.xlsx (2025-07-09)
+  📊 발견된 연도: 2024, 2025, 2026, 2027
+  🔄 처리 중: 1-50/1000
+(node:38336) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  🔄 처리 중: 51-100/1000
+  🔄 처리 중: 101-150/1000
+  🔄 처리 중: 151-200/1000
