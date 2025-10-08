@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface DBStatus {
   success: boolean;
@@ -14,12 +15,13 @@ interface DBStatus {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [status, setStatus] = useState<DBStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // 5초마다 갱신
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -52,7 +54,6 @@ export default function Home() {
           </div>
         ) : status?.success ? (
           <div className="space-y-6">
-            {/* 상태 카드 */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
@@ -61,7 +62,6 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* 통계 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 rounded-lg p-6 text-center">
                   <div className="text-4xl font-bold text-blue-600 mb-2">
@@ -82,9 +82,18 @@ export default function Home() {
                   <div className="text-gray-600 font-medium">주가 데이터</div>
                 </div>
               </div>
+
+              {/* 대시보드 바로가기 버튼 */}
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg shadow-lg transition-all"
+                >
+                  📈 데이터 분석 대시보드 열기
+                </button>
+              </div>
             </div>
 
-            {/* 샘플 데이터 */}
             {status.sample_companies && status.sample_companies.length > 0 && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
@@ -94,34 +103,18 @@ export default function Home() {
                   <table className="min-w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                          회사명
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                          종목코드
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                          시장
-                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">회사명</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">종목코드</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">시장</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {status.sample_companies.map((company) => (
                         <tr key={company.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {company.name}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600">
-                            {company.code}
-                          </td>
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{company.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{company.code}</td>
                           <td className="px-4 py-3 text-sm">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                company.market === 'KOSPI'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-green-100 text-green-800'
-                              }`}
-                            >
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${company.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                               {company.market}
                             </span>
                           </td>
@@ -133,7 +126,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* 마이그레이션 진행 상황 */}
             {status.tables && status.tables.financial_data < 200000 && (
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded">
                 <div className="flex items-center gap-3">
@@ -150,20 +142,13 @@ export default function Home() {
           </div>
         ) : (
           <div className="bg-red-50 rounded-lg shadow-md p-12 text-center">
-            <p className="text-red-600 text-lg font-medium">
-              ❌ 데이터베이스 연결 실패
-            </p>
-            <p className="text-gray-600 mt-2">
-              {status?.message || '알 수 없는 오류'}
-            </p>
+            <p className="text-red-600 text-lg font-medium">❌ 데이터베이스 연결 실패</p>
+            <p className="text-gray-600 mt-2">{status?.message || '알 수 없는 오류'}</p>
           </div>
         )}
 
-        {/* 다음 단계 안내 */}
         <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            🚀 다음 단계
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">🚀 다음 단계</h3>
           <ul className="space-y-2 text-gray-600">
             <li className="flex items-start gap-2">
               <span className="text-green-500 mt-1">✅</span>
@@ -174,12 +159,12 @@ export default function Home() {
               <span>Supabase 연결 완료</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-yellow-500 mt-1">🔄</span>
-              <span>기존 데이터 마이그레이션 진행 중</span>
+              <span className="text-green-500 mt-1">✅</span>
+              <span>대시보드 UI 구현 완료</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">⏳</span>
-              <span>대시보드 UI 구현 예정</span>
+              <span className="text-yellow-500 mt-1">🔄</span>
+              <span>기존 데이터 마이그레이션 진행 중</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-gray-400 mt-1">⏳</span>
