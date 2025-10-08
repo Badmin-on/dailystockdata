@@ -7,7 +7,8 @@ KOSPI/KOSDAQ 상위 1000개 기업의 재무제표 및 주가를 실시간으로
 - **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
 - **Deployment**: Vercel
-- **Automation**: Vercel Cron Jobs
+- **Automation**: Vercel Cron Jobs (평일 오전 8시)
+- **Data Sources**: Naver Finance, FnGuide
 
 ## 🛠️ 설정 가이드
 
@@ -31,8 +32,9 @@ cp .env.example .env.local
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase Project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase Anon Public Key
 - `SUPABASE_SERVICE_KEY`: Supabase Service Role Key (Settings → API)
+- `CRON_SECRET`: 랜덤 문자열 (Cron Job 보안용)
 
-### 4. 기존 데이터 마이그레이션
+### 4. 기존 데이터 마이그레이션 (선택)
 
 ```bash
 npm run migrate
@@ -41,6 +43,7 @@ npm run migrate
 ### 5. 로컬 개발 서버 실행
 
 ```bash
+npm install
 npm run dev
 ```
 
@@ -51,18 +54,77 @@ http://localhost:3000 접속
 1. GitHub에 푸시
 2. [Vercel](https://vercel.com) 연결
 3. 환경변수 설정 (Settings → Environment Variables)
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_KEY`
+   - `CRON_SECRET`
 4. 자동 배포 완료
 
 ## 📅 자동 데이터 수집
 
-평일 오전 8시 자동 실행 (Vercel Cron)
+### Vercel Cron Jobs (프로덕션)
+- **스케줄**: 평일 오전 8시 (KST)
+- **엔드포인트**: `/api/collect-data`
+- **보안**: `CRON_SECRET` 인증 필요
+
+### 수동 테스트 (로컬/프로덕션)
+```bash
+# 5개 기업 테스트
+curl http://localhost:3000/api/collect-data/manual
+```
 
 ## 📊 데이터 구조
 
-- **companies**: 기업 정보 (1000개)
-- **financial_data**: 재무제표 (매출액, 영업이익)
-- **daily_stock_prices**: 일일 주가 (종가, 변동률, 거래량)
+### Companies (기업 정보)
+- 1,131개 기업 (KOSPI 500 + KOSDAQ 500)
+- 종목코드, 회사명, 시장 구분
+
+### Financial Data (재무제표)
+- 131,674개 레코드
+- 4개년 데이터 (2024-2027)
+- 매출액, 영업이익 (억원 단위 → 원 단위 자동 변환)
+- 추정치 플래그
+
+### Daily Stock Prices (주가 데이터)
+- 종가, 변동률, 거래량
+- 120일 이평선 계산
+
+## 🎯 주요 기능
+
+### 대시보드 (`/dashboard`)
+- 전일/1개월/3개월/1년 전 대비 증감률 계산
+- 날짜/연도 필터링
+- 정렬 기능 (매출액/영업이익 증감율)
+- 유망 기업 하이라이팅 (✨ 추정치 기반 성장)
+- 당일 급등 기업 표시 (🔥 +5% 이상)
+
+### API 엔드포인트
+- `GET /api/stock-comparison`: 기업 데이터 비교
+- `GET /api/available-years`: 사용 가능한 연도 목록
+- `GET /api/test-db`: 데이터베이스 상태 확인
+- `GET /api/collect-data`: 자동 데이터 수집 (Cron)
+- `GET /api/collect-data/manual`: 수동 테스트 수집
+
+## 🔧 개발 스크립트
+
+```bash
+npm run dev          # 로컬 개발 서버
+npm run build        # 프로덕션 빌드
+npm run start        # 프로덕션 서버
+npm run migrate      # 기존 Excel 데이터 마이그레이션
+```
+
+## 📈 성능 최적화
+
+- **배치 처리**: 50개씩 병렬 처리
+- **Rate Limiting**: 초당 2개 요청
+- **타임아웃**: 5분 (Vercel Pro)
+- **캐싱**: 5초마다 자동 갱신
 
 ## 📄 라이선스
 
 Private Project
+
+## 🙋‍♂️ 문의
+
+GitHub Issues: https://github.com/Badmin-on/dailystockdata/issues
