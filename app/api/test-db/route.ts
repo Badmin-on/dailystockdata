@@ -3,6 +3,25 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
+    // 환경변수 확인
+    const requiredEnvVars = {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
+    };
+
+    const missingVars = Object.entries(requiredEnvVars)
+      .filter(([_, value]) => !value)
+      .map(([key, _]) => key);
+
+    if (missingVars.length > 0) {
+      return NextResponse.json({
+        success: false,
+        message: `Missing environment variables: ${missingVars.join(', ')}`,
+        error: 'Environment configuration error'
+      }, { status: 500 });
+    }
+
     // 1. 연결 테스트
     const { data: companies, error } = await supabaseAdmin
       .from('companies')
@@ -12,6 +31,7 @@ export async function GET() {
     if (error) {
       return NextResponse.json({
         success: false,
+        message: 'Database query failed',
         error: error.message
       }, { status: 500 });
     }
