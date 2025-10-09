@@ -102,3 +102,71 @@ export function extractYear(header: string): number | null {
 export function isEstimate(header: string): boolean {
   return header.includes('E') || header.includes('(E)') || header.includes('추정');
 }
+
+// 숫자 파싱 헬퍼 함수
+function cleanNumber(str: string | undefined | null): number | null {
+  if (!str || typeof str !== 'string' || str.trim() === '') {
+    return null;
+  }
+  const cleaned = str.replace(/[^0-9.-]/g, '');
+  if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
+    return parseFloat(cleaned);
+  }
+  return null;
+}
+
+// 네이버 금융에서 전날 종가 데이터 가져오기
+export async function fetchStockPrice(stockCode: string) {
+  const url = `https://finance.naver.com/item/sise_day.naver?code=${stockCode}`;
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      responseType: 'arraybuffer'
+    });
+    const decodedResponse = iconv.decode(Buffer.from(response.data), 'EUC-KR');
+    const $ = cheerio.load(decodedResponse);
+
+    // 첫 번째 데이터 행 (onmouseover 속성이 있는 행)
+    const firstRow = $('table.type2 tr[onmouseover]').first();
+
+    if (firstRow.length === 0) {
+      return null;
+    }
+
+    const cells = firstRow.find('td');
+    if (cells.length < 7) {
+      return null;
+    }
+
+    // 날짜 파싱 (2025.01.09 → 2025-01-09)
+    const dateText = $(cells[0]).text().trim();
+    const date = dateText.replace(/\./g, '-');
+
+    // 종가
+    const closePrice = cleanNumber($(cells[1]).text().trim());
+
+    // 변동률은 나중에 DB에서 계산 (전날 종가 비교)
+    // 현재는 null로 저장하고 별도 업데이트 로직에서 계산
+    const changeRate = null;
+
+    // 거래량
+    const volume = cleanNumber($(cells[6]).text().trim());
+
+    if (closePrice === null || !date) {
+      return null;
+    }
+
+    return {
+      date,
+      close_price: closePrice,
+      change_rate: changeRate,
+      volume: volume
+    };
+  } catch (error: any) {
+    console.error(`Error fetching stock price for ${stockCode}:`, error.message);
+    return null;
+  }
+}
