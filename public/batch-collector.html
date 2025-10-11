@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주가 데이터 배치 수집기</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    button {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-start {
+      background: #10b981;
+      color: white;
+    }
+    .btn-start:hover {
+      background: #059669;
+    }
+    .btn-stop {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-stop:hover {
+      background: #dc2626;
+    }
+    .btn-start:disabled, .btn-stop:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 40px;
+      background: #e5e7eb;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      width: 0%;
+      transition: width 0.5s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+    .log-container {
+      background: #1f2937;
+      color: #10b981;
+      padding: 20px;
+      border-radius: 8px;
+      height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+    }
+    .log-success {
+      color: #10b981;
+    }
+    .log-error {
+      color: #ef4444;
+    }
+    .log-info {
+      color: #3b82f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 주가 데이터 배치 수집기</h1>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">총 배치</div>
+        <div class="stat-value" id="totalBatches">18</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">완료</div>
+        <div class="stat-value" id="completedBatches">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">성공</div>
+        <div class="stat-value" id="successCount">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">실패</div>
+        <div class="stat-value" id="errorCount">0</div>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressBar">0%</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-start" id="startBtn" onclick="startCollection()">🚀 수집 시작</button>
+      <button class="btn-stop" id="stopBtn" onclick="stopCollection()" disabled>⏹️ 중지</button>
+    </div>
+
+    <div class="log-container" id="logContainer">
+      <div class="log-entry log-info">💡 "수집 시작" 버튼을 클릭하여 주가 데이터 수집을 시작하세요.</div>
+      <div class="log-entry log-info">⏱️ 예상 소요 시간: 약 15-20분</div>
+      <div class="log-entry log-info">📌 브라우저를 닫지 마세요!</div>
+    </div>
+  </div>
+
+  <script>
+    let isRunning = false;
+    let currentBatch = 1;
+    const totalBatches = 18;
+    let totalSuccess = 0;
+    let totalErrors = 0;
+
+    function log(message, type = 'info') {
+      const container = document.getElementById('logContainer');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      container.appendChild(entry);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updateStats() {
+      document.getElementById('completedBatches').textContent = currentBatch - 1;
+      document.getElementById('successCount').textContent = totalSuccess;
+      document.getElementById('errorCount').textContent = totalErrors;
+
+      const progress = ((currentBatch - 1) / totalBatches) * 100;
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = `${progress}%`;
+      progressBar.textContent = `${Math.round(progress)}%`;
+    }
+
+    async function collectBatch(batchNumber) {
+      try {
+        log(`📦 배치 ${batchNumber}/${totalBatches} 처리 중...`, 'info');
+
+        const response = await fetch(`/api/collect-stock-prices/batch?batch=${batchNumber}`);
+        const data = await response.json();
+
+        if (data.success) {
+          totalSuccess += data.success_count || 0;
+          totalErrors += data.error_count || 0;
+
+          log(`✅ 배치 ${batchNumber} 완료 - 성공: ${data.success_count}개, 실패: ${data.error_count}개`, 'success');
+          return true;
+        } else {
+          log(`❌ 배치 ${batchNumber} 실패: ${data.error}`, 'error');
+          totalErrors++;
+          return false;
+        }
+      } catch (error) {
+        log(`❌ 배치 ${batchNumber} 오류: ${error.message}`, 'error');
+        totalErrors++;
+        return false;
+      } finally {
+        updateStats();
+      }
+    }
+
+    async function startCollection() {
+      if (isRunning) return;
+
+      isRunning = true;
+      currentBatch = 1;
+      totalSuccess = 0;
+      totalErrors = 0;
+
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+      document.getElementById('logContainer').innerHTML = '';
+
+      log('🚀 주가 데이터 배치 수집 시작!', 'info');
+
+      for (let batch = 1; batch <= totalBatches; batch++) {
+        if (!isRunning) {
+          log('⏹️ 사용자가 수집을 중지했습니다.', 'info');
+          break;
+        }
+
+        currentBatch = batch;
+        await collectBatch(batch);
+
+        // 배치 간 1초 대기
+        if (batch < totalBatches && isRunning) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (isRunning) {
+        log('🎉 모든 배치 수집 완료!', 'success');
+        log(`📊 최종 결과 - 성공: ${totalSuccess}개, 실패: ${totalErrors}개`, 'info');
+        log('💾 Supabase에서 데이터 확인: SELECT COUNT(*) FROM daily_stock_prices;', 'info');
+      }
+
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+      isRunning = false;
+    }
+
+    function stopCollection() {
+      isRunning = false;
+      log('⏸️ 수집 중지 요청됨...', 'info');
+    }
+  </script>
+</body>
+</html>

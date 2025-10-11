@@ -116,6 +116,26 @@ export async function GET(request: NextRequest) {
     console.log(`📊 결과: 성공 ${successCount}개, 실패 ${errorCount}개`);
     console.log(`⏱️ 소요 시간: ${duration}초`);
 
+    // 재무제표 수집 완료 후 Materialized View 자동 갱신
+    console.log('🔄 Materialized View 갱신 중...');
+    try {
+      const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/refresh-views`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.CRON_SECRET}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (refreshResponse.ok) {
+        console.log('✅ View 갱신 완료');
+      } else {
+        console.error('⚠️ View 갱신 실패 (재무제표 수집은 성공)');
+      }
+    } catch (refreshError) {
+      console.error('⚠️ View 갱신 오류:', refreshError);
+    }
+
     return NextResponse.json({
       success: true,
       scrape_date: scrapeDate,

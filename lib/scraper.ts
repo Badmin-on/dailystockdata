@@ -115,58 +115,67 @@ function cleanNumber(str: string | undefined | null): number | null {
   return null;
 }
 
-// 네이버 금융에서 전날 종가 데이터 가져오기
+// 네이버 금융에서 최근 120일 주가 데이터 가져오기
 export async function fetchStockPrice(stockCode: string) {
-  const url = `https://finance.naver.com/item/sise_day.naver?code=${stockCode}`;
+  const priceData: Array<{
+    date: string;
+    close_price: number;
+    change_rate: number | null;
+    volume: number | null;
+  }> = [];
 
   try {
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      responseType: 'arraybuffer'
-    });
-    const decodedResponse = iconv.decode(Buffer.from(response.data), 'EUC-KR');
-    const $ = cheerio.load(decodedResponse);
+    // 120일치 데이터를 위해 최소 6페이지 필요 (페이지당 약 20일)
+    const maxPages = 6;
 
-    // 첫 번째 데이터 행 (onmouseover 속성이 있는 행)
-    const firstRow = $('table.type2 tr[onmouseover]').first();
+    for (let page = 1; page <= maxPages && priceData.length < 120; page++) {
+      const url = `https://finance.naver.com/item/sise_day.naver?code=${stockCode}&page=${page}`;
 
-    if (firstRow.length === 0) {
-      return null;
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        responseType: 'arraybuffer'
+      });
+      const decodedResponse = iconv.decode(Buffer.from(response.data), 'EUC-KR');
+      const $ = cheerio.load(decodedResponse);
+
+      // 모든 데이터 행 수집
+      $('table.type2 tr[onmouseover]').each((index, element) => {
+        if (priceData.length >= 120) return false; // 120개 도달 시 중단
+
+        const cells = $(element).find('td');
+        if (cells.length < 7) return;
+
+        // 날짜 파싱 (2025.01.09 → 2025-01-09)
+        const dateText = $(cells[0]).text().trim();
+        const date = dateText.replace(/\./g, '-');
+
+        // 종가
+        const closePrice = cleanNumber($(cells[1]).text().trim());
+
+        // 거래량
+        const volume = cleanNumber($(cells[6]).text().trim());
+
+        if (closePrice !== null && date) {
+          priceData.push({
+            date,
+            close_price: closePrice,
+            change_rate: null, // DB에서 계산
+            volume: volume
+          });
+        }
+      });
+
+      // 페이지 간 딜레이 (크롤링 예의)
+      if (page < maxPages && priceData.length < 120) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
 
-    const cells = firstRow.find('td');
-    if (cells.length < 7) {
-      return null;
-    }
-
-    // 날짜 파싱 (2025.01.09 → 2025-01-09)
-    const dateText = $(cells[0]).text().trim();
-    const date = dateText.replace(/\./g, '-');
-
-    // 종가
-    const closePrice = cleanNumber($(cells[1]).text().trim());
-
-    // 변동률은 나중에 DB에서 계산 (전날 종가 비교)
-    // 현재는 null로 저장하고 별도 업데이트 로직에서 계산
-    const changeRate = null;
-
-    // 거래량
-    const volume = cleanNumber($(cells[6]).text().trim());
-
-    if (closePrice === null || !date) {
-      return null;
-    }
-
-    return {
-      date,
-      close_price: closePrice,
-      change_rate: changeRate,
-      volume: volume
-    };
+    return priceData;
   } catch (error: any) {
     console.error(`Error fetching stock price for ${stockCode}:`, error.message);
-    return null;
+    return [];
   }
 }

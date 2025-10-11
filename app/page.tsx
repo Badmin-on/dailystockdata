@@ -84,12 +84,42 @@ export default function Home() {
               </div>
 
               {/* 대시보드 바로가기 버튼 */}
-              <div className="mt-6 text-center">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => router.push('/monitor')}
+                  className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-lg hover:from-purple-600 hover:to-purple-800 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl">📊</span>
+                    <div className="text-left">
+                      <div>모니터링 대시보드</div>
+                      <div className="text-xs font-normal opacity-90">데이터 수집 현황 + Top 20</div>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => router.push('/opportunities')}
+                  className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-lg hover:from-yellow-600 hover:to-orange-700 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl">🎯</span>
+                    <div className="text-left">
+                      <div>투자 기회 발굴</div>
+                      <div className="text-xs font-normal opacity-90">컨센서스 + 이격도 분석</div>
+                    </div>
+                  </div>
+                </button>
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg shadow-lg transition-all"
+                  className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg shadow-lg transition-all"
                 >
-                  📈 데이터 분석 대시보드 열기
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl">📈</span>
+                    <div className="text-left">
+                      <div>기본 대시보드</div>
+                      <div className="text-xs font-normal opacity-90">재무제표 변화 모니터링</div>
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>

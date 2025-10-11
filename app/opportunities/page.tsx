@@ -1,0 +1,415 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+
+interface InvestmentOpportunity {
+  company_id: number;
+  name: string;
+  code: string;
+  market: string;
+  year: number;
+  is_estimate: boolean;
+
+  // 재무 데이터
+  current_revenue: number | null;
+  current_op_profit: number | null;
+  revenue_change_1d: number | null;
+  op_profit_change_1d: number | null;
+  revenue_change_1m: number | null;
+  op_profit_change_1m: number | null;
+  revenue_change_3m: number | null;
+  op_profit_change_3m: number | null;
+  revenue_change_1y: number | null;
+  op_profit_change_1y: number | null;
+
+  // 주가 데이터
+  current_price: number | null;
+  ma_120: number | null;
+  divergence_120: number | null;
+  week_52_high: number | null;
+  week_52_low: number | null;
+  position_in_52w_range: number | null;
+
+  // 점수
+  consensus_score: number;
+  divergence_score: number;
+  investment_score: number;
+  investment_grade: string;
+}
+
+export default function OpportunitiesPage() {
+  const [data, setData] = useState<InvestmentOpportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    minScore: 50,
+    grade: '',
+    market: '',
+    sortBy: 'investment_score'
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.minScore) params.append('minScore', filters.minScore.toString());
+      if (filters.grade) params.append('grade', filters.grade);
+      if (filters.market) params.append('market', filters.market);
+      if (filters.sortBy) params.append('sortBy', filters.sortBy);
+
+      const res = await fetch(`/api/investment-opportunities?${params.toString()}`);
+      const result = await res.json();
+
+      if (result.success) {
+        setData(result.data);
+      }
+    } catch (error) {
+      console.error('데이터 로딩 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    fetchData();
+  };
+
+  const handleReset = () => {
+    setFilters({
+      minScore: 50,
+      grade: '',
+      market: '',
+      sortBy: 'investment_score'
+    });
+  };
+
+  const formatValue = (val: number | null) => {
+    if (val == null) return 'N/A';
+    return (val / 100000000).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  };
+
+  const formatPercent = (val: number | null) => {
+    if (val == null) return 'N/A';
+    return `${val > 0 ? '+' : ''}${val.toFixed(2)}%`;
+  };
+
+  const formatPrice = (val: number | null) => {
+    if (val == null) return 'N/A';
+    return val.toLocaleString() + '원';
+  };
+
+  const getGradeColor = (grade: string) => {
+    const colors: { [key: string]: string } = {
+      'S급': 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white',
+      'A급': 'bg-gradient-to-r from-blue-500 to-blue-700 text-white',
+      'B급': 'bg-gradient-to-r from-green-500 to-green-700 text-white',
+      'C급': 'bg-gradient-to-r from-gray-400 to-gray-600 text-white',
+      'D급': 'bg-gradient-to-r from-red-400 to-red-600 text-white'
+    };
+    return colors[grade] || 'bg-gray-200 text-gray-800';
+  };
+
+  const getDivergenceColor = (divergence: number | null) => {
+    if (divergence == null) return 'text-gray-500';
+    if (divergence <= -5) return 'text-green-600 font-bold';
+    if (divergence <= 5) return 'text-blue-600 font-semibold';
+    if (divergence <= 15) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getChangeColor = (change: number | null) => {
+    if (change == null) return 'text-gray-500';
+    if (change >= 20) return 'text-red-600 font-bold';
+    if (change >= 10) return 'text-red-500 font-semibold';
+    if (change >= 5) return 'text-orange-500';
+    if (change > 0) return 'text-green-500';
+    return 'text-gray-500';
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-[1920px] mx-auto">
+        {/* 헤더 */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                🎯 투자 기회 발굴
+              </h1>
+              <p className="text-gray-600">
+                재무 컨센서스 변화 + 120일 이평선 이격도 기반 투자 분석
+              </p>
+            </div>
+            <Link
+              href="/dashboard"
+              className="px-6 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all"
+            >
+              ← 기본 대시보드
+            </Link>
+          </div>
+        </div>
+
+        {/* 필터 패널 */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                최소 투자 점수
+              </label>
+              <input
+                type="number"
+                value={filters.minScore}
+                onChange={(e) => handleFilterChange('minScore', parseInt(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                min="0"
+                max="100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                투자 등급
+              </label>
+              <select
+                value={filters.grade}
+                onChange={(e) => handleFilterChange('grade', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">전체 등급</option>
+                <option value="S급">S급 (80점 이상)</option>
+                <option value="A급">A급 (70-79점)</option>
+                <option value="B급">B급 (60-69점)</option>
+                <option value="C급">C급 (50-59점)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                시장 구분
+              </label>
+              <select
+                value={filters.market}
+                onChange={(e) => handleFilterChange('market', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">전체 시장</option>
+                <option value="KOSPI">KOSPI</option>
+                <option value="KOSDAQ">KOSDAQ</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                정렬 기준
+              </label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="investment_score">종합 점수</option>
+                <option value="consensus_score">컨센서스 변화 점수</option>
+                <option value="divergence_score">이격도 점수</option>
+                <option value="revenue_change_1m">매출액 1개월 변화율</option>
+                <option value="op_profit_change_1m">영업이익 1개월 변화율</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={handleApplyFilters}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all"
+            >
+              🔍 필터 적용
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-all"
+            >
+              초기화
+            </button>
+          </div>
+        </div>
+
+        {/* 통계 카드 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-semibold opacity-90 mb-2">S급 기회</div>
+            <div className="text-3xl font-bold">
+              {data.filter(d => d.investment_grade === 'S급').length}개
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-semibold opacity-90 mb-2">A급 기회</div>
+            <div className="text-3xl font-bold">
+              {data.filter(d => d.investment_grade === 'A급').length}개
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-semibold opacity-90 mb-2">평균 투자 점수</div>
+            <div className="text-3xl font-bold">
+              {data.length > 0
+                ? (data.reduce((sum, d) => sum + d.investment_score, 0) / data.length).toFixed(1)
+                : '0'}점
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-white shadow-lg">
+            <div className="text-sm font-semibold opacity-90 mb-2">총 발굴 기업</div>
+            <div className="text-3xl font-bold">{data.length}개</div>
+          </div>
+        </div>
+
+        {/* 범례 */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="font-bold text-blue-900">컨센서스 점수:</span>
+              <span className="text-gray-700 ml-2">1개월 변화율 기반 (매출액/영업이익)</span>
+            </div>
+            <div>
+              <span className="font-bold text-blue-900">이격도 점수:</span>
+              <span className="text-gray-700 ml-2">120일 이평선 대비 현재가 위치</span>
+            </div>
+            <div>
+              <span className="font-bold text-blue-900">종합 점수:</span>
+              <span className="text-gray-700 ml-2">컨센서스(60%) + 이격도(40%)</span>
+            </div>
+            <div>
+              <span className="font-bold text-blue-900">이격도 해석:</span>
+              <span className="text-green-600 ml-2 font-semibold">-10~0%: 매수 적기</span>
+              <span className="text-gray-600 mx-2">|</span>
+              <span className="text-red-600 font-semibold">+15% 이상: 과열</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 데이터 테이블 */}
+        {loading ? (
+          <div className="bg-white rounded-xl shadow-lg p-16 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 text-lg">투자 기회 분석 중...</p>
+          </div>
+        ) : data.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-lg p-16 text-center">
+            <p className="text-gray-500 text-lg">조건에 맞는 투자 기회가 없습니다</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      순위
+                    </th>
+                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      등급
+                    </th>
+                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      기업명
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      종목코드
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      시장
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-yellow-50">
+                      투자점수
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-blue-50">
+                      컨센서스
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-green-50">
+                      이격도
+                    </th>
+                    <th className="px-4 py-4 text-right text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      현재가
+                    </th>
+                    <th className="px-4 py-4 text-right text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      120일평
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      이격률
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      1M 매출
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      1M 영업익
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {data.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-center font-bold text-gray-700">
+                        {idx + 1}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(row.investment_grade)}`}>
+                          {row.investment_grade}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-left font-semibold text-gray-900">
+                        {row.name}
+                        {row.is_estimate && <span className="ml-2 text-xs text-blue-600">(E)</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center text-gray-600 font-mono">
+                        {row.code}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                          {row.market}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center bg-yellow-50">
+                        <span className="text-lg font-bold text-yellow-700">
+                          {row.investment_score}점
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center bg-blue-50">
+                        <span className="font-semibold text-blue-700">
+                          {row.consensus_score}점
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center bg-green-50">
+                        <span className="font-semibold text-green-700">
+                          {row.divergence_score}점
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                        {formatPrice(row.current_price)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-600">
+                        {formatPrice(row.ma_120)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-bold ${getDivergenceColor(row.divergence_120)}`}>
+                        {formatPercent(row.divergence_120)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold ${getChangeColor(row.revenue_change_1m)}`}>
+                        {formatPercent(row.revenue_change_1m)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold ${getChangeColor(row.op_profit_change_1m)}`}>
+                        {formatPercent(row.op_profit_change_1m)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
