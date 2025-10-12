@@ -35,32 +35,34 @@ export async function GET(request: NextRequest) {
 
       for (const company of batch) {
         try {
-          const priceData = await fetchStockPrice(company.code);
+          const priceDataArray = await fetchStockPrice(company.code);
 
-          if (!priceData) {
+          if (!priceDataArray || priceDataArray.length === 0) {
             skippedCount++;
             continue;
           }
 
-          // 데이터베이스 저장
-          const { error: upsertError } = await supabaseAdmin
-            .from('daily_stock_prices')
-            .upsert(
-              {
-                company_id: company.id,
-                date: priceData.date,
-                close_price: priceData.close_price,
-                change_rate: priceData.change_rate,
-                volume: priceData.volume
-              },
-              { onConflict: 'company_id,date' }
-            );
+          // 배열의 모든 데이터를 저장
+          for (const priceData of priceDataArray) {
+            const { error: upsertError } = await supabaseAdmin
+              .from('daily_stock_prices')
+              .upsert(
+                {
+                  company_id: company.id,
+                  date: priceData.date,
+                  close_price: priceData.close_price,
+                  change_rate: priceData.change_rate,
+                  volume: priceData.volume
+                },
+                { onConflict: 'company_id,date' }
+              );
 
-          if (upsertError) {
-            console.error(`❌ 주가 저장 실패: ${company.name}`, upsertError);
-            errorCount++;
-          } else {
-            successCount++;
+            if (upsertError) {
+              console.error(`❌ 주가 저장 실패: ${company.name} (${priceData.date})`, upsertError);
+              errorCount++;
+            } else {
+              successCount++;
+            }
           }
 
           // Rate limiting
