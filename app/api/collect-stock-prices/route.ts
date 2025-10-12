@@ -39,36 +39,38 @@ export async function GET(request: NextRequest) {
 
       for (const company of batch) {
         try {
-          // 주가 데이터 수집
-          const priceData = await fetchStockPrice(company.code);
+          // 주가 데이터 수집 (배열 반환: 120일치 데이터)
+          const priceDataArray = await fetchStockPrice(company.code);
 
-          if (!priceData) {
+          if (!priceDataArray || priceDataArray.length === 0) {
             skippedCount++;
             continue;
           }
 
-          // 중복 체크 (같은 날짜 데이터가 이미 있으면 업데이트)
-          const { error: upsertError } = await supabaseAdmin
-            .from('daily_stock_prices')
-            .upsert(
-              {
-                company_id: company.id,
-                date: priceData.date,
-                close_price: priceData.close_price,
-                change_rate: priceData.change_rate,
-                volume: priceData.volume
-              },
-              { onConflict: 'company_id,date' }
-            );
+          // 각 날짜별 데이터 저장
+          for (const priceData of priceDataArray) {
+            const { error: upsertError } = await supabaseAdmin
+              .from('daily_stock_prices')
+              .upsert(
+                {
+                  company_id: company.id,
+                  date: priceData.date,
+                  close_price: priceData.close_price,
+                  change_rate: priceData.change_rate,
+                  volume: priceData.volume
+                },
+                { onConflict: 'company_id,date' }
+              );
 
-          if (upsertError) {
-            console.error(`❌ 주가 저장 실패: ${company.name}`, upsertError);
-            errorCount++;
-          } else {
-            successCount++;
+            if (upsertError) {
+              console.error(`❌ 주가 저장 실패: ${company.name} (${priceData.date})`, upsertError);
+              errorCount++;
+            } else {
+              successCount++;
+            }
           }
 
-          // Rate limiting (초당 2개)
+          // Rate limiting (초당 2개 기업)
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error: any) {
           console.error(`❌ 오류 (${company.name}):`, error.message);
