@@ -323,6 +323,9 @@ export default function OpportunitiesPage() {
                     <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
                       시장
                     </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                      연도
+                    </th>
                     <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-yellow-50">
                       투자점수
                     </th>
@@ -370,6 +373,11 @@ export default function OpportunitiesPage() {
                       <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                           {row.market}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {row.year}년
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center bg-yellow-50">
