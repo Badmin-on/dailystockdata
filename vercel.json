@@ -2,13 +2,11 @@
   "crons": [
     {
       "path": "/api/collect-data",
-      "schedule": "0 23 * * 0-4",
-      "description": "매일 08:00 KST - 재무제표 수집 (월-금)"
+      "schedule": "0 23 * * 0-4"
     },
     {
       "path": "/api/collect-stock-prices",
-      "schedule": "0 11 * * 1-5",
-      "description": "매일 20:00 KST - 주가 데이터 수집 (월-금)"
+      "schedule": "0 11 * * 1-5"
     }
   ]
 }
