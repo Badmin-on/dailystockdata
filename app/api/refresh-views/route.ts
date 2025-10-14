@@ -7,11 +7,16 @@ import { supabaseAdmin } from '@/lib/supabase';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Cron Secret 검증 (선택적)
+    // Cron Secret 검증 (선택적 - Authorization 헤더가 있는 경우에만)
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Authorization 헤더가 있으면 반드시 검증
+    if (authHeader) {
+      if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
+    // Authorization 헤더가 없으면 통과 (브라우저에서 호출 허용)
 
     console.log('🔄 Materialized View 갱신 시작...');
     const startTime = Date.now();

@@ -87,9 +87,9 @@ export default function MonitorPage() {
       const res = await fetch('/api/refresh-views', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'test'}`,
           'Content-Type': 'application/json'
         }
+        // Authorization 헤더 제거 - 브라우저에서는 인증 없이 호출
       });
       const data = await res.json();
       if (data.success) {
