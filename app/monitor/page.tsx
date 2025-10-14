@@ -126,6 +126,11 @@ export default function MonitorPage() {
     return colors[grade] || 'bg-gray-200 text-gray-800';
   };
 
+  const getDivergenceColor = (val: number | null) => {
+    if (val == null) return 'text-gray-500';
+    return val >= 0 ? 'text-red-600' : 'text-blue-600';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -356,7 +361,7 @@ export default function MonitorPage() {
                           <td className="px-4 py-3 text-right font-semibold text-gray-900">
                             {formatPrice(row.current_price)}
                           </td>
-                          <td className="px-4 py-3 text-center font-semibold text-blue-600">
+                          <td className={`px-4 py-3 text-center font-semibold ${getDivergenceColor(row.divergence_120)}`}>
                             {formatPercent(row.divergence_120)}
                           </td>
                           <td className="px-4 py-3 text-center font-semibold text-orange-600">
