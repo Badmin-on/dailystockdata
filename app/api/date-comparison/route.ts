@@ -165,11 +165,17 @@ export async function GET(request: NextRequest) {
       // 최소 증감률 필터
       if (growthRate < minGrowth) continue;
 
+      const company = Array.isArray(startItem.companies) 
+        ? startItem.companies[0] 
+        : startItem.companies;
+
+      if (!company) continue;
+
       companies.push({
-        id: startItem.companies.id,
-        name: startItem.companies.name,
-        code: startItem.companies.code,
-        market: startItem.companies.market,
+        id: company.id,
+        name: company.name,
+        code: company.code,
+        market: company.market,
         year: startItem.year,
         startValue: toEok(startValue, 2),
         endValue: toEok(endValue, 2),
