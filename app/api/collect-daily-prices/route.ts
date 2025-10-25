@@ -48,11 +48,14 @@ export async function GET(request: NextRequest) {
       const batch = batches[batchIndex];
       
       // 병렬로 주가 수집
-      const pricePromises = batch.map(company => 
-        fetchLatestStockPrice(company.code)
-          .then(price => ({ company, price, error: null }))
-          .catch(error => ({ company, price: null, error }))
-      );
+      const pricePromises = batch.map(async (company) => {
+        try {
+          const price = await fetchLatestStockPrice(company.code);
+          return { company, price, error: null };
+        } catch (error) {
+          return { company, price: null, error };
+        }
+      });
 
       const results = await Promise.all(pricePromises);
 
