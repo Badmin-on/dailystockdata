@@ -50,19 +50,21 @@ export async function GET(request: NextRequest) {
       // 병렬로 주가 수집
       const pricePromises = batch.map(company => 
         fetchLatestStockPrice(company.code)
-          .then(price => ({ company, price }))
+          .then(price => ({ company, price, error: null }))
           .catch(error => ({ company, price: null, error }))
       );
 
       const results = await Promise.all(pricePromises);
 
       // DB에 저장
-      for (const { company, price, error } of results) {
-        if (error) {
-          console.error(`❌ ${company.name} (${company.code}) 수집 실패:`, error);
+      for (const result of results) {
+        if (result.error) {
+          console.error(`❌ ${result.company.name} (${result.company.code}) 수집 실패:`, result.error);
           errorCount++;
           continue;
         }
+
+        const { company, price } = result;
 
         if (!price || !price.date || price.close_price === null) {
           skippedCount++;

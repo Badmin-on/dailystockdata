@@ -1,125 +1,208 @@
+/**
+ * 재무 데이터 수집 API (원본 1_seoul_ys_fnguide.js 로직 기반)
+ * 
+ * 수집 내용:
+ * - KOSPI 상위 500개 + KOSDAQ 상위 500개 = 1,000개 기업
+ * - FnGuide에서 최근 4개년도 재무 컨센서스 데이터
+ * - 매출액, 영업이익 및 증감률
+ * 
+ * Cron 스케줄: 매주 일요일 23:00 KST
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   fetchTopStocks,
-  fetchFinancialData,
-  parseAndScaleValue,
-  extractYear,
-  isEstimate
-} from '@/lib/scraper';
+  fetchStockFinancialData,
+  transformFinancialData,
+  type CompanyFinancialData
+} from '@/lib/scraper-fnguide';
 
 export const maxDuration = 300; // Vercel Pro: 5분 타임아웃
 
-export async function GET(request: NextRequest) {
-  // Cron Secret 검증
+/**
+ * Cron 비밀키 검증
+ */
+function validateCronSecret(request: NextRequest): boolean {
+  // URL 쿼리 파라미터에서 secret 확인
+  const searchParams = request.nextUrl.searchParams;
+  const cronSecret = searchParams.get('secret');
+  
+  // Authorization 헤더에서도 확인
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const bearerSecret = authHeader?.replace('Bearer ', '');
+  
+  const expectedSecret = process.env.CRON_SECRET;
+  
+  return cronSecret === expectedSecret || bearerSecret === expectedSecret;
+}
+
+/**
+ * 지연 함수
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * GET 요청 핸들러
+ */
+export async function GET(request: NextRequest) {
+  // 1. Cron Secret 검증
+  if (!validateCronSecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const startTime = Date.now();
   const scrapeDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-  console.log(`🚀 데이터 수집 시작: ${scrapeDate}`);
+  console.log(`🚀 [FnGuide] 재무 데이터 수집 시작: ${scrapeDate}`);
 
   try {
-    // 1. 상위 1000개 기업 목록 가져오기
-    console.log('📋 기업 목록 수집 중...');
-    const [kospiStocks, kosdaqStocks] = await Promise.all([
-      fetchTopStocks('KOSPI', 500),
-      fetchTopStocks('KOSDAQ', 500)
-    ]);
+    // ============================================
+    // 2. 기업 목록 수집 (KOSPI 500 + KOSDAQ 500)
+    // ============================================
+    console.log('📋 [1/4] 기업 목록 수집 중...');
+    
+    const kospiStocks = await fetchTopStocks('KOSPI', 500);
+    console.log(`   ✅ KOSPI ${kospiStocks.length}개 수집`);
+    
+    const kosdaqStocks = await fetchTopStocks('KOSDAQ', 500);
+    console.log(`   ✅ KOSDAQ ${kosdaqStocks.length}개 수집`);
 
     const allStocks = [...kospiStocks, ...kosdaqStocks];
-    console.log(`✅ ${allStocks.length}개 기업 목록 수집 완료`);
+    const totalCompanies = allStocks.length;
+    
+    console.log(`   ✅ 총 ${totalCompanies}개 기업 목록 수집 완료\n`);
 
+    // ============================================
+    // 3. 각 기업별 재무 데이터 수집
+    // ============================================
+    console.log(`📊 [2/4] 재무 데이터 수집 중 (총 ${totalCompanies}개)...`);
+    
     let successCount = 0;
     let errorCount = 0;
+    let skipCount = 0;
+    const allFinancialData: CompanyFinancialData[] = [];
 
-    // 2. 배치 처리 (50개씩)
-    const BATCH_SIZE = 50;
-    for (let i = 0; i < allStocks.length; i += BATCH_SIZE) {
-      const batch = allStocks.slice(i, i + BATCH_SIZE);
-      console.log(`🔄 처리 중: ${i + 1}-${Math.min(i + BATCH_SIZE, allStocks.length)}/${allStocks.length}`);
-
-      for (const stock of batch) {
-        try {
-          // 재무 데이터 수집
-          const financialData = await fetchFinancialData(stock.code);
-
-          if (!financialData.headers || financialData.headers.length === 0) {
-            errorCount++;
-            continue;
-          }
-
-          // 회사 등록/업데이트
-          const { data: company, error: companyError } = await supabaseAdmin
-            .from('companies')
-            .upsert(
-              { code: stock.code, name: stock.name, market: stock.market },
-              { onConflict: 'code' }
-            )
-            .select('id')
-            .single();
-
-          if (companyError || !company) {
-            console.error(`❌ 회사 등록 실패: ${stock.name}`, companyError);
-            errorCount++;
-            continue;
-          }
-
-          // 재무 데이터 저장
-          for (let yearIndex = 0; yearIndex < financialData.headers.length; yearIndex++) {
-            const header = financialData.headers[yearIndex];
-            const year = extractYear(header);
-
-            if (!year) continue;
-
-            const revenue = parseAndScaleValue(financialData.data['매출액']?.[yearIndex]);
-            const opProfit = parseAndScaleValue(financialData.data['영업이익']?.[yearIndex]);
-
-            if (revenue === null && opProfit === null) continue;
-
-            const { error: finError } = await supabaseAdmin
-              .from('financial_data')
-              .upsert(
-                {
-                  company_id: company.id,
-                  year: year,
-                  scrape_date: scrapeDate,
-                  revenue: revenue,
-                  operating_profit: opProfit,
-                  is_estimate: isEstimate(header)
-                },
-                { onConflict: 'company_id,year,scrape_date' }
-              );
-
-            if (finError) {
-              console.error(`❌ 재무 데이터 저장 실패: ${stock.name} ${year}`, finError);
-            }
-          }
-
-          successCount++;
-
-          // Rate limiting (초당 1-2개)
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error: any) {
-          console.error(`❌ 오류 (${stock.name}):`, error.message);
-          errorCount++;
+    // 배치 처리 (20개씩 진행상황 출력)
+    const BATCH_SIZE = 20;
+    for (let i = 0; i < allStocks.length; i++) {
+      const stock = allStocks[i];
+      
+      try {
+        // FnGuide에서 재무 데이터 수집
+        const rawData = await fetchStockFinancialData(stock.code);
+        
+        // 데이터 검증
+        if (!rawData.headers || rawData.headers.length === 0) {
+          console.log(`   ⚠️ 데이터 없음: ${stock.name} (${stock.code})`);
+          skipCount++;
+          continue;
         }
+        
+        // 데이터 변환
+        const financialData = transformFinancialData(stock, rawData);
+        allFinancialData.push(financialData);
+        
+        successCount++;
+        
+        // 진행률 출력 (20개마다)
+        if ((i + 1) % BATCH_SIZE === 0 || i === allStocks.length - 1) {
+          const progress = ((i + 1) / totalCompanies * 100).toFixed(1);
+          console.log(`   📈 진행: ${i + 1}/${totalCompanies} (${progress}%) - 성공: ${successCount}, 스킵: ${skipCount}`);
+        }
+        
+        // Rate limiting (초당 1개, 원본 로직 유지)
+        await delay(1000);
+        
+      } catch (error) {
+        errorCount++;
+        console.error(`   ❌ 오류: ${stock.name} (${stock.code})`, 
+          error instanceof Error ? error.message : String(error));
       }
     }
+    
+    console.log(`   ✅ 재무 데이터 수집 완료: 성공 ${successCount}, 실패 ${errorCount}, 스킵 ${skipCount}\n`);
 
-    const duration = Math.round((Date.now() - startTime) / 1000);
+    // ============================================
+    // 4. Supabase에 데이터 저장
+    // ============================================
+    console.log(`💾 [3/4] Supabase 저장 중 (${allFinancialData.length}개 기업)...`);
+    
+    let companiesSaved = 0;
+    let financialRecordsSaved = 0;
 
-    console.log('\n✅ 데이터 수집 완료!');
-    console.log(`📊 결과: 성공 ${successCount}개, 실패 ${errorCount}개`);
-    console.log(`⏱️ 소요 시간: ${duration}초`);
+    for (let i = 0; i < allFinancialData.length; i++) {
+      const item = allFinancialData[i];
+      
+      try {
+        // 4-1. 회사 정보 등록/업데이트
+        const { data: company, error: companyError } = await supabaseAdmin
+          .from('companies')
+          .upsert(
+            {
+              code: item.company.code,
+              name: item.company.name,
+              market: item.company.market
+            },
+            { onConflict: 'code' }
+          )
+          .select('id')
+          .single();
 
-    // 재무제표 수집 완료 후 Materialized View 자동 갱신
-    console.log('🔄 Materialized View 갱신 중...');
+        if (companyError || !company) {
+          console.error(`   ❌ 회사 등록 실패: ${item.company.name}`, companyError);
+          continue;
+        }
+        
+        companiesSaved++;
+
+        // 4-2. 재무 데이터 저장 (각 연도별)
+        for (const yearData of item.years_data) {
+          // 증감률은 계산하지만 DB에는 저장하지 않음 (원본 로직 유지)
+          const { error: finError } = await supabaseAdmin
+            .from('financial_data')
+            .upsert(
+              {
+                company_id: company.id,
+                year: yearData.year,
+                scrape_date: scrapeDate,
+                revenue: yearData.revenue,
+                operating_profit: yearData.operating_profit,
+                is_estimate: false // FnGuide는 컨센서스이므로 추정치로 간주
+              },
+              { onConflict: 'company_id,year,scrape_date' }
+            );
+
+          if (finError) {
+            console.error(`   ❌ 재무 데이터 저장 실패: ${item.company.name} ${yearData.year}`, finError);
+          } else {
+            financialRecordsSaved++;
+          }
+        }
+        
+        // 진행률 출력 (50개마다)
+        if ((i + 1) % 50 === 0 || i === allFinancialData.length - 1) {
+          const progress = ((i + 1) / allFinancialData.length * 100).toFixed(1);
+          console.log(`   💾 저장 진행: ${i + 1}/${allFinancialData.length} (${progress}%)`);
+        }
+        
+      } catch (error) {
+        console.error(`   ❌ 저장 오류: ${item.company.name}`, 
+          error instanceof Error ? error.message : String(error));
+      }
+    }
+    
+    console.log(`   ✅ 저장 완료: 기업 ${companiesSaved}개, 재무레코드 ${financialRecordsSaved}개\n`);
+
+    // ============================================
+    // 5. Materialized View 갱신
+    // ============================================
+    console.log('🔄 [4/4] Materialized View 갱신 중...');
     try {
-      const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/refresh-views`, {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const refreshResponse = await fetch(`${siteUrl}/api/refresh-views`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.CRON_SECRET}`,
@@ -128,29 +211,59 @@ export async function GET(request: NextRequest) {
       });
 
       if (refreshResponse.ok) {
-        console.log('✅ View 갱신 완료');
+        console.log('   ✅ View 갱신 완료\n');
       } else {
-        console.error('⚠️ View 갱신 실패 (재무제표 수집은 성공)');
+        console.log('   ⚠️ View 갱신 실패 (재무 데이터 수집은 성공)\n');
       }
     } catch (refreshError) {
-      console.error('⚠️ View 갱신 오류:', refreshError);
+      console.error('   ⚠️ View 갱신 오류:', refreshError);
     }
+
+    // ============================================
+    // 6. 결과 반환
+    // ============================================
+    const duration = Math.round((Date.now() - startTime) / 1000);
+    const durationMinutes = (duration / 60).toFixed(1);
+
+    console.log('✅ ========================================');
+    console.log('✅ 재무 데이터 수집 완료!');
+    console.log('✅ ========================================');
+    console.log(`📊 수집 결과:`);
+    console.log(`   - 총 기업: ${totalCompanies}개`);
+    console.log(`   - 수집 성공: ${successCount}개`);
+    console.log(`   - 저장 완료: ${companiesSaved}개 기업, ${financialRecordsSaved}개 레코드`);
+    console.log(`   - 실패/스킵: ${errorCount + skipCount}개`);
+    console.log(`⏱️ 소요 시간: ${durationMinutes}분 (${duration}초)`);
+    console.log('✅ ========================================\n');
 
     return NextResponse.json({
       success: true,
       scrape_date: scrapeDate,
-      total_stocks: allStocks.length,
-      success_count: successCount,
-      error_count: errorCount,
-      duration_seconds: duration
+      stats: {
+        total_companies: totalCompanies,
+        scraped_success: successCount,
+        scraped_error: errorCount,
+        scraped_skip: skipCount,
+        saved_companies: companiesSaved,
+        saved_financial_records: financialRecordsSaved
+      },
+      duration: {
+        seconds: duration,
+        minutes: parseFloat(durationMinutes)
+      },
+      message: `${companiesSaved}개 기업의 재무 데이터 (${financialRecordsSaved}개 레코드) 수집 완료`
     });
-  } catch (error: any) {
-    console.error('❌ 데이터 수집 중 오류:', error);
+
+  } catch (error) {
+    const duration = Math.round((Date.now() - startTime) / 1000);
+    console.error('❌ 데이터 수집 중 치명적 오류:', error);
+    
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
-        scrape_date: scrapeDate
+        error: error instanceof Error ? error.message : String(error),
+        scrape_date: scrapeDate,
+        duration_seconds: duration
       },
       { status: 500 }
     );
