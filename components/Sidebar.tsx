@@ -160,13 +160,13 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="p-4 border-t border-slate-700/50">
             <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-lg p-3 border border-blue-500/20">
-              <div className="flex items-start space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xs font-bold">데이터</span>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CircleStackIcon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-300">실시간 연동</p>
-                  <p className="text-xs text-slate-500">Supabase DB</p>
+                  <p className="text-sm font-semibold text-slate-200">데이터 연동</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Supabase DB</p>
                 </div>
               </div>
             </div>
