@@ -1,0 +1,15 @@
+{
+  "comment": "이 파일은 Cron Jobs 설정 백업입니다. 배포 후 다시 vercel.json에 추가하세요.",
+  "crons": [
+    {
+      "path": "/api/collect-data?secret=${CRON_SECRET}",
+      "schedule": "0 14 * * *",
+      "comment": "매일 23:00 KST - 재무 데이터 수집 (컨센서스 변화 추적용)"
+    },
+    {
+      "path": "/api/collect-daily-prices?secret=${CRON_SECRET}",
+      "schedule": "0 11 * * 1-5",
+      "comment": "평일 20:00 KST - 주가 데이터 수집"
+    }
+  ]
+}
