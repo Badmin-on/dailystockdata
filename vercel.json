@@ -1,13 +1,4 @@
 {
   "buildCommand": "next build",
-  "framework": "nextjs",
-  "regions": ["icn1"],
-  "functions": {
-    "app/api/collect-data/route.ts": {
-      "maxDuration": 300
-    },
-    "app/api/collect-daily-prices/route.ts": {
-      "maxDuration": 300
-    }
-  }
+  "framework": "nextjs"
 }
