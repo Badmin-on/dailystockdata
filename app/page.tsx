@@ -84,7 +84,19 @@ export default function Home() {
               </div>
 
               {/* 대시보드 바로가기 버튼 */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button
+                  onClick={() => router.push('/admin/collect')}
+                  className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg hover:from-red-600 hover:to-red-800 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-2xl">🔧</span>
+                    <div className="text-left">
+                      <div>데이터 수집</div>
+                      <div className="text-xs font-normal opacity-90">재무 + 주가 데이터</div>
+                    </div>
+                  </div>
+                </button>
                 <button
                   onClick={() => router.push('/monitor')}
                   className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-lg hover:from-purple-600 hover:to-purple-800 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
