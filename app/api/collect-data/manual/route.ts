@@ -128,8 +128,8 @@ export async function POST() {
             }
 
             // 데이터 변환 및 저장 준비
-            const financialData = transformFinancialData(rawData, stock, scrapeDate);
-            allFinancialData.push(...financialData);
+            const financialData = transformFinancialData(stock, rawData);
+            allFinancialData.push(financialData);
             successCount++;
 
             // 진행 상황 업데이트
@@ -203,31 +203,68 @@ export async function POST() {
         // ============================================
         sendMessage({
           status: 'running',
-          message: `💾 [4/4] 재무 데이터 저장 중 (${allFinancialData.length}개 레코드)...`,
+          message: `💾 [4/4] 재무 데이터 저장 중 (${allFinancialData.length}개 기업)...`,
         });
 
-        if (allFinancialData.length > 0) {
-          // 배치로 나누어 저장 (500개씩)
-          const BATCH_SIZE = 500;
-          for (let i = 0; i < allFinancialData.length; i += BATCH_SIZE) {
-            const batch = allFinancialData.slice(i, i + BATCH_SIZE);
-            
-            const { error } = await supabaseAdmin
-              .from('financial_data')
-              .upsert(batch, {
-                onConflict: 'company_id,year,scrape_date'
-              });
+        let financialRecordsSaved = 0;
 
-            if (error) {
-              throw new Error(`DB 저장 실패: ${error.message}`);
+        for (const item of allFinancialData) {
+          try {
+            // 4-1. 회사 정보 등록/업데이트
+            const { data: company, error: companyError } = await supabaseAdmin
+              .from('companies')
+              .upsert(
+                {
+                  code: item.company.code,
+                  name: item.company.name,
+                  market: item.company.market
+                },
+                { onConflict: 'code' }
+              )
+              .select('id')
+              .single();
+
+            if (companyError || !company) {
+              continue;
             }
 
-            sendMessage({
-              status: 'running',
-              message: `💾 ${Math.min(i + BATCH_SIZE, allFinancialData.length)}/${allFinancialData.length} 저장 완료`,
-            });
+            // 4-2. 재무 데이터 저장 (각 연도별)
+            for (const yearData of item.years_data) {
+              const { error: finError } = await supabaseAdmin
+                .from('financial_data')
+                .upsert(
+                  {
+                    company_id: company.id,
+                    year: yearData.year,
+                    scrape_date: scrapeDate,
+                    revenue: yearData.revenue,
+                    operating_profit: yearData.operating_profit,
+                    is_estimate: false
+                  },
+                  { onConflict: 'company_id,year,scrape_date' }
+                );
+
+              if (!finError) {
+                financialRecordsSaved++;
+              }
+            }
+
+            // 진행 상황 업데이트 (10개마다)
+            if (financialRecordsSaved % 10 === 0) {
+              sendMessage({
+                status: 'running',
+                message: `💾 ${financialRecordsSaved}개 레코드 저장 완료`,
+              });
+            }
+          } catch (error: any) {
+            // 개별 기업 저장 실패 시 계속 진행
           }
         }
+
+        sendMessage({
+          status: 'running',
+          message: `✅ 총 ${financialRecordsSaved}개 재무 레코드 저장 완료`,
+        });
 
         // ============================================
         // 5. Materialized Views 갱신
