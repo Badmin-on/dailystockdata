@@ -7,9 +7,11 @@ import {
   ArrowPathIcon,
   SparklesIcon,
   ChartBarIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
   BanknotesIcon
+} from '@heroicons/react/24/outline';
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon
 } from '@heroicons/react/24/outline';
 
 /**
@@ -499,7 +501,7 @@ export default function InvestmentFinderPage() {
                       {item.price_deviation !== null ? (
                         <span className={item.price_deviation < 0 ? 'text-blue-400 font-semibold' : 'text-orange-400'}>
                           {item.price_deviation.toFixed(2)}%
-                          {item.price_deviation < 0 ? <TrendingDownIcon className="inline w-4 h-4 ml-1" /> : <TrendingUpIcon className="inline w-4 h-4 ml-1" />}
+                          {item.price_deviation < 0 ? <ArrowTrendingDownIcon className="inline w-4 h-4 ml-1" /> : <ArrowTrendingUpIcon className="inline w-4 h-4 ml-1" />}
                         </span>
                       ) : '-'}
                     </td>

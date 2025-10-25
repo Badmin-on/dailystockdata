@@ -241,11 +241,13 @@ export async function POST() {
           message: '🔄 Materialized Views 갱신 중...',
         });
 
-        await supabaseAdmin.rpc('refresh_materialized_view', {
-          view_name: 'mv_stock_analysis'
-        }).catch(() => {
+        try {
+          await supabaseAdmin.rpc('refresh_materialized_view', {
+            view_name: 'mv_stock_analysis'
+          });
+        } catch (error) {
           // View가 없으면 무시
-        });
+        }
 
         sendMessage({
           status: 'running',
