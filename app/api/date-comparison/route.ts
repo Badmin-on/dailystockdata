@@ -147,8 +147,12 @@ export async function GET(request: NextRequest) {
       if (!endItem) continue;
       if (year && startItem.year !== parseInt(year)) continue;
 
-      const startValue = startItem[metricColumn];
-      const endValue = endItem[metricColumn];
+      const startValue = metricColumn === 'revenue' 
+        ? (startItem as any).revenue 
+        : (startItem as any).operating_profit;
+      const endValue = metricColumn === 'revenue'
+        ? (endItem as any).revenue
+        : (endItem as any).operating_profit;
 
       // 증감률 계산
       let growthRate = 0;
