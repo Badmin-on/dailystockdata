@@ -29,15 +29,26 @@ const menuItems: MenuItem[] = [
     icon: HomeIcon
   },
   {
+    name: '🎯 투자 기회 발굴',
+    path: '/investment-finder',
+    icon: ArrowTrendingUpIcon,
+    badge: 'HOT'
+  },
+  {
     name: '실시간 모니터링',
     path: '/monitor',
-    icon: ChartBarIcon,
+    icon: ChartBarIcon
+  },
+  {
+    name: '수집 현황',
+    path: '/collection-status',
+    icon: ArrowPathIcon,
     badge: 'NEW'
   },
   {
-    name: '투자 기회',
-    path: '/opportunities',
-    icon: ArrowTrendingUpIcon
+    name: '종목 비교',
+    path: '/stock-comparison',
+    icon: CircleStackIcon
   },
   {
     name: '날짜별 비교',
@@ -45,9 +56,9 @@ const menuItems: MenuItem[] = [
     icon: CalendarDaysIcon
   },
   {
-    name: '종목 비교',
-    path: '/stock-comparison',
-    icon: CircleStackIcon
+    name: '투자 기회 (구버전)',
+    path: '/opportunities',
+    icon: ArrowTrendingUpIcon
   },
   {
     name: '히스토리',
@@ -123,7 +134,13 @@ export default function Sidebar() {
                   <>
                     <span className="ml-3 font-medium">{item.name}</span>
                     {item.badge && (
-                      <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                      <span className={`ml-auto px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        item.badge === 'HOT' 
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse' 
+                          : item.badge === 'NEW'
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
+                          : 'bg-red-500 text-white'
+                      }`}>
                         {item.badge}
                       </span>
                     )}

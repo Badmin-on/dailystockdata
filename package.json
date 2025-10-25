@@ -10,18 +10,19 @@
     "migrate": "node scripts/migrate-to-supabase.js"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.47.10",
     "@types/node": "^24.6.2",
     "@types/react": "^19.2.0",
+    "axios": "^1.7.9",
+    "cheerio": "^1.1.0",
+    "dotenv": "^16.4.7",
+    "iconv-lite": "^0.6.3",
     "next": "^15.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "typescript": "^5.9.3",
-    "@supabase/supabase-js": "^2.47.10",
-    "axios": "^1.7.9",
-    "cheerio": "^1.1.0",
-    "iconv-lite": "^0.6.3",
-    "xlsx": "^0.18.5",
-    "dotenv": "^16.4.7"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react-dom": "^19.2.0",
