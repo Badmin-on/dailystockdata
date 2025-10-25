@@ -1,11 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/collect-data",
-      "schedule": "0 23 * * 0-4"
+      "path": "/api/collect-data?secret=${CRON_SECRET}",
+      "schedule": "0 14 * * 0"
     },
     {
-      "path": "/api/collect-stock-prices",
+      "path": "/api/collect-daily-prices?secret=${CRON_SECRET}",
       "schedule": "0 11 * * 1-5"
     }
   ]
