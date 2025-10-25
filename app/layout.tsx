@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import Sidebar from "@/components/Sidebar";
+import MainContent from "@/components/MainContent";
 
 export const metadata: Metadata = {
   title: "YoonStock Pro - 주식 데이터 모니터링",
@@ -15,10 +17,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-slate-950">
-        <Sidebar />
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <SidebarProvider>
+          <Sidebar />
+          <MainContent>
+            {children}
+          </MainContent>
+        </SidebarProvider>
       </body>
     </html>
   );

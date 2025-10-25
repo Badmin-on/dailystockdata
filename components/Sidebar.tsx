@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
   HomeIcon,
   ChartBarIcon,
@@ -12,7 +13,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleStackIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -73,17 +75,15 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebar();
   const pathname = usePathname();
 
   return (
-    <>
-      {/* 사이드바 */}
-      <aside
-        className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 ${
-          collapsed ? 'w-20' : 'w-64'
-        }`}
-      >
+    <aside
+      className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+    >
         {/* 로고 영역 */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700/50">
           {!collapsed && (
@@ -173,11 +173,5 @@ export default function Sidebar() {
           </div>
         )}
       </aside>
-
-      {/* 메인 컨텐츠 영역을 위한 패딩 */}
-      <div className={`transition-all duration-300 ${collapsed ? 'ml-20' : 'ml-64'}`}>
-        {/* 여기에 페이지 컨텐츠가 들어갑니다 */}
-      </div>
-    </>
   );
 }
