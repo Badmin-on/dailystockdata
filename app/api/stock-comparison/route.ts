@@ -1,5 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
+
+/**
+ * 주가 이격도 계산 (120일 이평선 기준)
+ */
+async function calculatePriceDeviations(
+  companyIds: number[],
+  referenceDate: string
+): Promise<Map<number, { current_price: number | null; ma120: number | null; deviation: number | null }>> {
+  const deviations = new Map();
+
+  for (const companyId of companyIds) {
+    try {
+      // 최근 120일 주가 데이터 가져오기
+      const { data: priceData, error } = await supabaseAdmin
+        .from('daily_stock_prices')
+        .select('close_price')
+        .eq('company_id', companyId)
+        .lte('date', referenceDate)
+        .order('date', { ascending: false })
+        .limit(120);
+
+      if (error) {
+        console.error(`Price data error for company ${companyId}:`, error);
+        deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+        continue;
+      }
+
+      if (!priceData || priceData.length < 120) {
+        // 120일 데이터가 부족하면 null
+        deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+        continue;
+      }
+
+      // 120일 이평선 계산
+      const prices = priceData.map(row => parseFloat(row.close_price));
+      const ma120 = prices.reduce((sum, price) => sum + price, 0) / 120;
+      const currentPrice = prices[0]; // 최신 가격
+
+      // 이격도 계산: ((현재가 / 120일 이평) * 100 - 100)
+      const deviation = ((currentPrice / ma120) * 100 - 100);
+
+      deviations.set(companyId, {
+        current_price: currentPrice,
+        ma120: parseFloat(ma120.toFixed(2)),
+        deviation: parseFloat(deviation.toFixed(2))
+      });
+    } catch (error) {
+      console.error(`Error calculating deviation for company ${companyId}:`, error);
+      deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+    }
+  }
+
+  return deviations;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,6 +148,9 @@ export async function GET(request: NextRequest) {
     const threeMonthMap = createMap(threeMonthData.data || []);
     const oneYearMap = createMap(oneYearData.data || []);
 
+    // 주가 이격도 계산
+    const priceDeviations = await calculatePriceDeviations(companyIds, latestScrapeDate);
+
     // 증감률 계산 함수
     const calculateGrowth = (current: number | null, previous: number | null) => {
       if (current == null || previous == null || previous === 0) return null;
@@ -131,6 +188,13 @@ export async function GET(request: NextRequest) {
         (parseFloat(opProfitGrowthPrevDay || '0') >= 5 || opProfitGrowthPrevDay === 'Infinity')
       );
 
+      // 주가 이격도 정보
+      const priceInfo = priceDeviations.get(row.company_id) || {
+        current_price: null,
+        ma120: null,
+        deviation: null
+      };
+
       return {
         name: company.name,
         code: company.code,
@@ -142,6 +206,11 @@ export async function GET(request: NextRequest) {
 
         current_revenue: row.revenue,
         current_op_profit: row.operating_profit,
+
+        // 주가 및 이격도 정보
+        current_price: priceInfo.current_price,
+        ma120: priceInfo.ma120,
+        price_deviation: priceInfo.deviation,
 
         prev_day_revenue: prevDayRecord?.revenue || null,
         prev_day_op_profit: prevDayRecord?.operating_profit || null,
