@@ -84,42 +84,12 @@ export default function SettingsPage() {
     setCollectionLogs(logs);
   };
 
-  // 진행률 polling
-  const pollProgress = async (sessionId: string): Promise<void> => {
-    return new Promise((resolve) => {
-      const interval = setInterval(async () => {
-        try {
-          const response = await fetch(`/api/collection-progress/${sessionId}`);
-          const data = await response.json();
-
-          if (data.success && data.progress) {
-            const { progress } = data;
-            const percent = progress.total_count > 0
-              ? (progress.current_count / progress.total_count * 100).toFixed(1)
-              : '0';
-
-            setCurrentProgress(`${progress.current_count}/${progress.total_count}`);
-            setProgressPercent(parseFloat(percent));
-
-            // 로그 업데이트
-            if (progress.logs && Array.isArray(progress.logs)) {
-              setLogs(progress.logs);
-            }
-
-            // 완료 또는 실패 시 polling 중단
-            if (progress.status === 'completed' || progress.status === 'failed') {
-              clearInterval(interval);
-              resolve();
-            }
-          }
-        } catch (error) {
-          console.error('Polling error:', error);
-        }
-      }, 2000); // 2초마다 조회
-    });
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('ko-KR');
+    setCollectionLogs(prev => [...prev, `[${timestamp}] ${message}`]);
   };
 
-  // 재무 데이터 수집 (배치 방식)
+  // 재무 데이터 수집 (스트리밍 방식)
   const handleCollectFinancial = async () => {
     setFinancialCollecting(true);
     setFinancialCompleted(false);
@@ -127,82 +97,125 @@ export default function SettingsPage() {
     setCurrentProgress('0/1000');
     setProgressPercent(0);
 
-    const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const TOTAL_BATCHES = 10; // 100개씩 10배치
-
-    // 진행률 polling 시작
-    const pollingPromise = pollProgress(sessionId);
-
     try {
-      // 배치 순차 실행
-      for (let batchIndex = 0; batchIndex < TOTAL_BATCHES; batchIndex++) {
-        const response = await fetch('/api/collect-data/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId,
-            batchIndex,
-            totalBatches: TOTAL_BATCHES
-          })
-        });
+      const eventSource = new EventSource('/api/collect-financial-stream');
 
-        const data = await response.json();
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-        if (!data.success) {
-          throw new Error(data.error || '배치 처리 실패');
+          switch (data.type) {
+            case 'start':
+            case 'log':
+              addLog(data.message);
+              break;
+
+            case 'total':
+              setCurrentProgress(`0/${data.total}`);
+              addLog(data.message);
+              break;
+
+            case 'progress':
+              setCurrentProgress(`${data.current}/${data.total}`);
+              setProgressPercent(data.percent || 0);
+              addLog(data.message);
+              break;
+
+            case 'save_progress':
+              addLog(data.message);
+              break;
+
+            case 'complete':
+              addLog(data.message);
+              addLog(`📊 총 ${data.stats.saved_companies}개 기업, ${data.stats.saved_financial_records}개 레코드 저장`);
+              setFinancialCompleted(true);
+              eventSource.close();
+              setFinancialCollecting(false);
+              break;
+
+            case 'error':
+              addLog(data.message);
+              eventSource.close();
+              setFinancialCollecting(false);
+              break;
+          }
+        } catch (e) {
+          console.error('Failed to parse event:', e);
         }
+      };
 
-        // 마지막 배치 완료 시
-        if (data.batch.isLast) {
-          await pollingPromise; // polling 완료 대기
-          setFinancialCompleted(true);
-        }
-      }
+      eventSource.onerror = (error) => {
+        console.error('EventSource error:', error);
+        addLog('❌ 연결 오류 발생');
+        eventSource.close();
+        setFinancialCollecting(false);
+      };
+
     } catch (error) {
       console.error('Collection error:', error);
-      setLogs(prev => [...prev, `❌ 오류: ${error instanceof Error ? error.message : String(error)}`]);
-    } finally {
+      addLog(`❌ 오류: ${error instanceof Error ? error.message : String(error)}`);
       setFinancialCollecting(false);
     }
   };
 
-  // 주가 데이터 수집 (배치 방식)
+  // 주가 데이터 수집 (스트리밍 방식)
   const handleCollectPrices = async () => {
     setPriceCollecting(true);
     setCurrentProgress('0/1000');
     setProgressPercent(0);
 
-    const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const TOTAL_BATCHES = 5; // 200개씩 5배치
-
-    const pollingPromise = pollProgress(sessionId);
-
     try {
-      for (let batchIndex = 0; batchIndex < TOTAL_BATCHES; batchIndex++) {
-        const response = await fetch('/api/collect-daily-prices/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId,
-            batchIndex,
-            totalBatches: TOTAL_BATCHES
-          })
-        });
+      const eventSource = new EventSource('/api/collect-prices-stream');
 
-        const data = await response.json();
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-        if (!data.success) {
-          throw new Error(data.error || '배치 처리 실패');
+          switch (data.type) {
+            case 'start':
+            case 'log':
+              addLog(data.message);
+              break;
+
+            case 'total':
+              setCurrentProgress(`0/${data.total}`);
+              addLog(data.message);
+              break;
+
+            case 'progress':
+              setCurrentProgress(`${data.current}/${data.total}`);
+              setProgressPercent(data.percent || 0);
+              addLog(data.message);
+              break;
+
+            case 'complete':
+              addLog(data.message);
+              addLog(`📊 ${data.stats.success_count}개 기업 주가 저장 완료`);
+              eventSource.close();
+              setPriceCollecting(false);
+              break;
+
+            case 'error':
+              addLog(data.message);
+              eventSource.close();
+              setPriceCollecting(false);
+              break;
+          }
+        } catch (e) {
+          console.error('Failed to parse event:', e);
         }
+      };
 
-        if (data.batch.isLast) {
-          await pollingPromise;
-        }
-      }
+      eventSource.onerror = (error) => {
+        console.error('EventSource error:', error);
+        addLog('❌ 연결 오류 발생');
+        eventSource.close();
+        setPriceCollecting(false);
+      };
+
     } catch (error) {
       console.error('Collection error:', error);
-      setLogs(prev => [...prev, `❌ 오류: ${error instanceof Error ? error.message : String(error)}`]);
-    } finally {
+      addLog(`❌ 오류: ${error instanceof Error ? error.message : String(error)}`);
       setPriceCollecting(false);
     }
   };
