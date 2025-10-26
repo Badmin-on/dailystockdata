@@ -41,16 +41,41 @@ interface InvestmentOpportunity {
 export default function OpportunitiesPage() {
   const [data, setData] = useState<InvestmentOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [filters, setFilters] = useState({
     minScore: 50,
     grade: '',
     market: '',
+    year: '',
     sortBy: 'investment_score'
   });
 
   useEffect(() => {
-    fetchData();
+    fetchAvailableYears();
   }, []);
+
+  useEffect(() => {
+    if (availableYears.length > 0 && !filters.year) {
+      // 최신 년도를 기본값으로 설정
+      setFilters(prev => ({ ...prev, year: availableYears[0].toString() }));
+    }
+  }, [availableYears]);
+
+  useEffect(() => {
+    if (filters.year) {
+      fetchData();
+    }
+  }, [filters.year]);
+
+  const fetchAvailableYears = async () => {
+    try {
+      const response = await fetch('/api/available-years');
+      const years = await response.json();
+      setAvailableYears(years);
+    } catch (error) {
+      console.error('Error fetching years:', error);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,6 +84,7 @@ export default function OpportunitiesPage() {
       if (filters.minScore) params.append('minScore', filters.minScore.toString());
       if (filters.grade) params.append('grade', filters.grade);
       if (filters.market) params.append('market', filters.market);
+      if (filters.year) params.append('year', filters.year);
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
 
       const res = await fetch(`/api/investment-opportunities?${params.toString()}`);
@@ -87,6 +113,7 @@ export default function OpportunitiesPage() {
       minScore: 50,
       grade: '',
       market: '',
+      year: availableYears.length > 0 ? availableYears[0].toString() : '',
       sortBy: 'investment_score'
     });
   };
@@ -159,7 +186,22 @@ export default function OpportunitiesPage() {
 
         {/* 필터 패널 */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                분석 년도
+              </label>
+              <select
+                value={filters.year}
+                onChange={(e) => handleFilterChange('year', e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year}년</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 최소 투자 점수

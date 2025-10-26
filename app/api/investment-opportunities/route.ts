@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const minScore = parseInt(searchParams.get('minScore') || '50');
     const grade = searchParams.get('grade'); // S급, A급, B급, C급
     const market = searchParams.get('market'); // KOSPI, KOSDAQ
+    const year = searchParams.get('year'); // 년도 필터
     const sortBy = searchParams.get('sortBy') || 'investment_score';
     const limit = parseInt(searchParams.get('limit') || '100');
 
@@ -26,6 +27,9 @@ export async function GET(request: NextRequest) {
     }
     if (market) {
       query = query.eq('market', market);
+    }
+    if (year) {
+      query = query.eq('year', parseInt(year));
     }
 
     // 정렬
