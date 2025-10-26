@@ -16,6 +16,7 @@ import {
 
 export const maxDuration = 300; // 5분
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Edge runtime 대신 Node.js runtime 사용
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));

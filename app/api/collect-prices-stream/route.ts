@@ -8,6 +8,7 @@ import { fetchLatestStockPrice } from '@/lib/scraper-daily';
 
 export const maxDuration = 300; // 5분
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'; // Edge runtime 대신 Node.js runtime 사용
 
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
