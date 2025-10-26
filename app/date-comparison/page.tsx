@@ -44,18 +44,36 @@ export default function DateComparisonPage() {
   const [year, setYear] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [limit, setLimit] = useState(100);
-  
+
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [startMonthDates, setStartMonthDates] = useState<string[]>([]);
+  const [endMonthDates, setEndMonthDates] = useState<string[]>([]);
 
   useEffect(() => {
     fetchAvailableYears();
     fetchAvailableDates();
   }, []);
+
+  // 시작 날짜의 월이 변경되면 해당 월의 데이터 날짜 가져오기
+  useEffect(() => {
+    if (startDate) {
+      const [year, month] = startDate.split('-');
+      fetchMonthDates(parseInt(year), parseInt(month), 'start');
+    }
+  }, [startDate]);
+
+  // 종료 날짜의 월이 변경되면 해당 월의 데이터 날짜 가져오기
+  useEffect(() => {
+    if (endDate) {
+      const [year, month] = endDate.split('-');
+      fetchMonthDates(parseInt(year), parseInt(month), 'end');
+    }
+  }, [endDate]);
 
   const fetchAvailableYears = async () => {
     try {
@@ -72,20 +90,20 @@ export default function DateComparisonPage() {
       // 재무 데이터의 최근 날짜 가져오기
       const response = await fetch('/api/data-status');
       const data = await response.json();
-      
+
       if (data.success && data.overall.latest_financial_date) {
         const latest = new Date(data.overall.latest_financial_date);
         const dates: string[] = [];
-        
+
         // 최근 50개 날짜 생성 (대략적으로)
         for (let i = 0; i < 365; i += 7) {
           const date = new Date(latest);
           date.setDate(date.getDate() - i);
           dates.push(date.toISOString().split('T')[0]);
         }
-        
+
         setAvailableDates(dates);
-        
+
         // 기본값 설정 (1개월 전 ~ 최근)
         if (!startDate) {
           const oneMonthAgo = new Date(latest);
@@ -98,6 +116,23 @@ export default function DateComparisonPage() {
       }
     } catch (error) {
       console.error('Error fetching dates:', error);
+    }
+  };
+
+  const fetchMonthDates = async (year: number, month: number, type: 'start' | 'end') => {
+    try {
+      const response = await fetch(`/api/available-financial-dates?year=${year}&month=${month}`);
+      const data = await response.json();
+
+      if (data.success && data.dates) {
+        if (type === 'start') {
+          setStartMonthDates(data.dates);
+        } else {
+          setEndMonthDates(data.dates);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching month dates:', error);
     }
   };
 
@@ -164,8 +199,32 @@ export default function DateComparisonPage() {
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
+            {startMonthDates.length > 0 && (
+              <div className="mt-2 p-2 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                <p className="text-xs text-slate-400 mb-1">📅 데이터 수집일:</p>
+                <div className="flex flex-wrap gap-1">
+                  {startMonthDates.map((date) => {
+                    const day = new Date(date).getDate();
+                    const isSelected = startDate === date;
+                    return (
+                      <button
+                        key={date}
+                        onClick={() => setStartDate(date)}
+                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {day}일
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">종료 날짜</label>
             <input
@@ -174,6 +233,30 @@ export default function DateComparisonPage() {
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
             />
+            {endMonthDates.length > 0 && (
+              <div className="mt-2 p-2 bg-slate-900/50 rounded-lg border border-slate-700/50">
+                <p className="text-xs text-slate-400 mb-1">📅 데이터 수집일:</p>
+                <div className="flex flex-wrap gap-1">
+                  {endMonthDates.map((date) => {
+                    const day = new Date(date).getDate();
+                    const isSelected = endDate === date;
+                    return (
+                      <button
+                        key={date}
+                        onClick={() => setEndDate(date)}
+                        className={`px-2 py-1 rounded text-xs font-medium transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {day}일
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           
           <div>
