@@ -6,7 +6,10 @@ import {
   BellIcon,
   ChartBarIcon,
   ClockIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 
 interface Settings {
@@ -51,6 +54,12 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 데이터 수집 상태
+  const [financialCollecting, setFinancialCollecting] = useState(false);
+  const [priceCollecting, setPriceCollecting] = useState(false);
+  const [financialCompleted, setFinancialCompleted] = useState(false);
+  const [collectionLogs, setCollectionLogs] = useState<string[]>([]);
+
   useEffect(() => {
     fetchSettings();
   }, []);
@@ -66,6 +75,64 @@ export default function SettingsPage() {
       console.error('Failed to fetch settings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('ko-KR');
+    setCollectionLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+  };
+
+  const handleCollectFinancial = async () => {
+    setFinancialCollecting(true);
+    setFinancialCompleted(false);
+    setCollectionLogs([]);
+    addLog('재무 데이터 수집 시작...');
+
+    try {
+      const response = await fetch('/api/collect-data/manual', {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        addLog(`✅ 재무 데이터 수집 완료!`);
+        addLog(`📊 ${data.stats.saved_companies}개 기업, ${data.stats.saved_financial_records}개 레코드 저장`);
+        addLog(`⏱️ 소요 시간: ${data.duration.minutes}분`);
+        setFinancialCompleted(true);
+      } else {
+        addLog(`❌ 수집 실패: ${data.error}`);
+      }
+    } catch (error) {
+      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setFinancialCollecting(false);
+    }
+  };
+
+  const handleCollectPrices = async () => {
+    setPriceCollecting(true);
+    addLog('주가 데이터 수집 시작...');
+
+    try {
+      const response = await fetch('/api/collect-daily-prices/manual', {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        addLog(`✅ 주가 데이터 수집 완료!`);
+        addLog(`📊 ${data.stats.success_count}개 기업 주가 저장`);
+        addLog(`⏱️ 소요 시간: ${data.stats.duration_seconds}초`);
+      } else {
+        addLog(`❌ 수집 실패: ${data.error}`);
+      }
+    } catch (error) {
+      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setPriceCollecting(false);
     }
   };
 
@@ -89,6 +156,112 @@ export default function SettingsPage() {
             ⚙️ 설정
           </h1>
           <p className="text-slate-400">애플리케이션 설정 및 구성</p>
+        </div>
+
+        {/* Manual Data Collection */}
+        <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-blue-500/30 rounded-xl p-8 mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <ChartBarIcon className="h-6 w-6 text-blue-400" />
+            <h2 className="text-2xl font-bold text-white">수동 데이터 수집</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* 재무 데이터 수집 */}
+            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold text-white mb-2">1. 재무 데이터 수집</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                KOSPI 500 + KOSDAQ 500 = 1,000개 기업<br/>
+                소요 시간: 약 20-30분
+              </p>
+              <button
+                onClick={handleCollectFinancial}
+                disabled={financialCollecting}
+                className={`w-full px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center ${
+                  financialCollecting
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                    : financialCompleted
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {financialCollecting ? (
+                  <>
+                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                    수집 중...
+                  </>
+                ) : financialCompleted ? (
+                  <>
+                    <CheckCircleIcon className="w-5 h-5 mr-2" />
+                    수집 완료
+                  </>
+                ) : (
+                  <>
+                    <ChartBarIcon className="w-5 h-5 mr-2" />
+                    재무 데이터 수집 시작
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* 주가 데이터 수집 */}
+            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
+              <h3 className="text-lg font-semibold text-white mb-2">2. 주가 데이터 수집</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                1,000개 기업 당일 주가<br/>
+                소요 시간: 약 5-10분
+              </p>
+              <button
+                onClick={handleCollectPrices}
+                disabled={priceCollecting || !financialCompleted}
+                className={`w-full px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center ${
+                  priceCollecting
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                    : !financialCompleted
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                }`}
+              >
+                {priceCollecting ? (
+                  <>
+                    <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                    수집 중...
+                  </>
+                ) : !financialCompleted ? (
+                  <>
+                    <ExclamationCircleIcon className="w-5 h-5 mr-2" />
+                    재무 데이터 먼저 수집 필요
+                  </>
+                ) : (
+                  <>
+                    <ClockIcon className="w-5 h-5 mr-2" />
+                    주가 데이터 수집 시작
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* 수집 로그 */}
+          {collectionLogs.length > 0 && (
+            <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-700">
+              <h3 className="text-sm font-semibold text-white mb-2">📋 수집 로그</h3>
+              <div className="bg-black/50 rounded p-3 max-h-60 overflow-y-auto font-mono text-sm">
+                {collectionLogs.map((log, index) => (
+                  <div key={index} className="text-slate-300 mb-1">
+                    {log}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 안내 메시지 */}
+          <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <p className="text-blue-400 text-sm">
+              ℹ️ <strong>주의사항:</strong> 수집 중에는 브라우저 탭을 닫지 마세요.
+              재무 데이터 수집이 완료된 후 주가 데이터 수집을 진행할 수 있습니다.
+            </p>
+          </div>
         </div>
 
         {/* Data Collection Settings */}
