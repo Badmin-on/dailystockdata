@@ -80,142 +80,63 @@ export default function SettingsPage() {
     }
   };
 
-  const setLogs = (logs: string[]) => {
-    setCollectionLogs(logs);
-  };
-
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString('ko-KR');
     setCollectionLogs(prev => [...prev, `[${timestamp}] ${message}`]);
   };
 
-  // 재무 데이터 수집 (스트리밍 방식)
+  // 재무 데이터 수집 (단순 방식)
   const handleCollectFinancial = async () => {
     setFinancialCollecting(true);
     setFinancialCompleted(false);
     setCollectionLogs([]);
-    setCurrentProgress('0/1000');
-    setProgressPercent(0);
+    addLog('재무 데이터 수집 시작...');
+    addLog('⚠️ 5분 타임아웃 제한으로 약 300개 기업까지만 수집됩니다.');
 
     try {
-      const eventSource = new EventSource('/api/collect-financial-stream');
+      const response = await fetch('/api/collect-data/manual', {
+        method: 'POST'
+      });
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+      const data = await response.json();
 
-          switch (data.type) {
-            case 'start':
-            case 'log':
-              addLog(data.message);
-              break;
-
-            case 'total':
-              setCurrentProgress(`0/${data.total}`);
-              addLog(data.message);
-              break;
-
-            case 'progress':
-              setCurrentProgress(`${data.current}/${data.total}`);
-              setProgressPercent(data.percent || 0);
-              addLog(data.message);
-              break;
-
-            case 'save_progress':
-              addLog(data.message);
-              break;
-
-            case 'complete':
-              addLog(data.message);
-              addLog(`📊 총 ${data.stats.saved_companies}개 기업, ${data.stats.saved_financial_records}개 레코드 저장`);
-              setFinancialCompleted(true);
-              eventSource.close();
-              setFinancialCollecting(false);
-              break;
-
-            case 'error':
-              addLog(data.message);
-              eventSource.close();
-              setFinancialCollecting(false);
-              break;
-          }
-        } catch (e) {
-          console.error('Failed to parse event:', e);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('EventSource error:', error);
-        addLog('❌ 연결 오류 발생');
-        eventSource.close();
-        setFinancialCollecting(false);
-      };
-
+      if (data.success) {
+        addLog(`✅ 재무 데이터 수집 완료!`);
+        addLog(`📊 ${data.stats.saved_companies}개 기업, ${data.stats.saved_financial_records}개 레코드 저장`);
+        addLog(`⏱️ 소요 시간: ${data.duration.minutes}분`);
+        setFinancialCompleted(true);
+      } else {
+        addLog(`❌ 수집 실패: ${data.error}`);
+      }
     } catch (error) {
-      console.error('Collection error:', error);
-      addLog(`❌ 오류: ${error instanceof Error ? error.message : String(error)}`);
+      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
       setFinancialCollecting(false);
     }
   };
 
-  // 주가 데이터 수집 (스트리밍 방식)
+  // 주가 데이터 수집 (단순 방식)
   const handleCollectPrices = async () => {
     setPriceCollecting(true);
-    setCurrentProgress('0/1000');
-    setProgressPercent(0);
+    addLog('주가 데이터 수집 시작...');
 
     try {
-      const eventSource = new EventSource('/api/collect-prices-stream');
+      const response = await fetch('/api/collect-daily-prices/manual', {
+        method: 'POST'
+      });
 
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
+      const data = await response.json();
 
-          switch (data.type) {
-            case 'start':
-            case 'log':
-              addLog(data.message);
-              break;
-
-            case 'total':
-              setCurrentProgress(`0/${data.total}`);
-              addLog(data.message);
-              break;
-
-            case 'progress':
-              setCurrentProgress(`${data.current}/${data.total}`);
-              setProgressPercent(data.percent || 0);
-              addLog(data.message);
-              break;
-
-            case 'complete':
-              addLog(data.message);
-              addLog(`📊 ${data.stats.success_count}개 기업 주가 저장 완료`);
-              eventSource.close();
-              setPriceCollecting(false);
-              break;
-
-            case 'error':
-              addLog(data.message);
-              eventSource.close();
-              setPriceCollecting(false);
-              break;
-          }
-        } catch (e) {
-          console.error('Failed to parse event:', e);
-        }
-      };
-
-      eventSource.onerror = (error) => {
-        console.error('EventSource error:', error);
-        addLog('❌ 연결 오류 발생');
-        eventSource.close();
-        setPriceCollecting(false);
-      };
-
+      if (data.success) {
+        addLog(`✅ 주가 데이터 수집 완료!`);
+        addLog(`📊 ${data.stats.success_count}개 기업 주가 저장`);
+        addLog(`⏱️ 소요 시간: ${data.stats.duration_seconds}초`);
+      } else {
+        addLog(`❌ 수집 실패: ${data.error}`);
+      }
     } catch (error) {
-      console.error('Collection error:', error);
-      addLog(`❌ 오류: ${error instanceof Error ? error.message : String(error)}`);
+      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
       setPriceCollecting(false);
     }
   };
