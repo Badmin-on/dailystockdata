@@ -2,53 +2,65 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 /**
- * 주가 이격도 계산 (120일 이평선 기준)
+ * 주가 이격도 계산 (120일 이평선 기준) - 배치 처리 최적화
+ * 성능 개선: 1,794개 순차 쿼리 → ~18개 배치 쿼리
  */
 async function calculatePriceDeviations(
   companyIds: number[],
   referenceDate: string
 ): Promise<Map<number, { current_price: number | null; ma120: number | null; deviation: number | null }>> {
   const deviations = new Map();
+  const BATCH_SIZE = 100;
 
-  for (const companyId of companyIds) {
+  for (let i = 0; i < companyIds.length; i += BATCH_SIZE) {
+    const batchIds = companyIds.slice(i, i + BATCH_SIZE);
+
     try {
-      // 최근 120일 주가 데이터 가져오기
-      const { data: priceData, error } = await supabaseAdmin
+      const { data: allPriceData, error } = await supabaseAdmin
         .from('daily_stock_prices')
-        .select('close_price')
-        .eq('company_id', companyId)
+        .select('company_id, close_price, date')
+        .in('company_id', batchIds)
         .lte('date', referenceDate)
-        .order('date', { ascending: false })
-        .limit(120);
+        .order('company_id', { ascending: true })
+        .order('date', { ascending: false });
 
       if (error) {
-        console.error(`Price data error for company ${companyId}:`, error);
-        deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+        console.error(`Batch error (${i / BATCH_SIZE + 1}):`, error);
+        batchIds.forEach(id => deviations.set(id, { current_price: null, ma120: null, deviation: null }));
         continue;
       }
 
-      if (!priceData || priceData.length < 120) {
-        // 120일 데이터가 부족하면 null
-        deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
-        continue;
-      }
+      const pricesByCompany = new Map<number, any[]>();
+      allPriceData?.forEach((row: any) => {
+        if (!pricesByCompany.has(row.company_id)) {
+          pricesByCompany.set(row.company_id, []);
+        }
+        pricesByCompany.get(row.company_id)!.push(row);
+      });
 
-      // 120일 이평선 계산
-      const prices = priceData.map(row => parseFloat(row.close_price));
-      const ma120 = prices.reduce((sum, price) => sum + price, 0) / 120;
-      const currentPrice = prices[0]; // 최신 가격
+      batchIds.forEach(companyId => {
+        const companyPrices = pricesByCompany.get(companyId);
 
-      // 이격도 계산: ((현재가 / 120일 이평) * 100 - 100)
-      const deviation = ((currentPrice / ma120) * 100 - 100);
+        if (!companyPrices || companyPrices.length < 120) {
+          deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+          return;
+        }
 
-      deviations.set(companyId, {
-        current_price: currentPrice,
-        ma120: parseFloat(ma120.toFixed(2)),
-        deviation: parseFloat(deviation.toFixed(2))
+        const last120Prices = companyPrices.slice(0, 120);
+        const prices = last120Prices.map((row: any) => parseFloat(row.close_price));
+        const ma120 = prices.reduce((sum: number, price: number) => sum + price, 0) / 120;
+        const currentPrice = prices[0];
+        const deviation = ((currentPrice / ma120) * 100 - 100);
+
+        deviations.set(companyId, {
+          current_price: currentPrice,
+          ma120: parseFloat(ma120.toFixed(2)),
+          deviation: parseFloat(deviation.toFixed(2))
+        });
       });
     } catch (error) {
-      console.error(`Error calculating deviation for company ${companyId}:`, error);
-      deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
+      console.error(`Error batch ${i / BATCH_SIZE + 1}:`, error);
+      batchIds.forEach(id => deviations.set(id, { current_price: null, ma120: null, deviation: null }));
     }
   }
 
@@ -63,7 +75,6 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy');
     const sortOrder = searchParams.get('sortOrder') || 'DESC';
 
-    // 최신 scrape_date 가져오기
     let latestScrapeDate: string;
     if (date) {
       latestScrapeDate = date;
@@ -81,7 +92,6 @@ export async function GET(request: NextRequest) {
       latestScrapeDate = latestData.scrape_date;
     }
 
-    // 가장 가까운 과거 날짜 찾기
     const findClosestDate = async (targetDate: Date) => {
       const { data } = await supabase
         .from('financial_data')
@@ -99,7 +109,6 @@ export async function GET(request: NextRequest) {
     const threeMonthsAgoDate = await findClosestDate(new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()));
     const oneYearAgoDate = await findClosestDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
 
-    // 현재 데이터 가져오기
     let query = supabase
       .from('financial_data')
       .select(`
@@ -123,7 +132,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([]);
     }
 
-    // 과거 데이터 가져오기 (배치 처리)
     const companyIds = todayData.map((d: any) => d.company_id);
 
     const [prevDayData, oneMonthData, threeMonthData, oneYearData] = await Promise.all([
@@ -133,7 +141,6 @@ export async function GET(request: NextRequest) {
       oneYearAgoDate ? supabase.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', oneYearAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
     ]);
 
-    // 데이터 맵 생성
     const createMap = (data: any[]) => {
       const map: any = {};
       data?.forEach((item: any) => {
@@ -148,17 +155,14 @@ export async function GET(request: NextRequest) {
     const threeMonthMap = createMap(threeMonthData.data || []);
     const oneYearMap = createMap(oneYearData.data || []);
 
-    // 주가 이격도 계산
     const priceDeviations = await calculatePriceDeviations(companyIds, latestScrapeDate);
 
-    // 증감률 계산 함수
     const calculateGrowth = (current: number | null, previous: number | null) => {
       if (current == null || previous == null || previous === 0) return null;
       if (previous < 0 && current > 0) return 'Infinity';
       return ((current - previous) / Math.abs(previous) * 100).toFixed(2);
     };
 
-    // 데이터 조합
     const comparisonData = todayData.map((row: any) => {
       const key = `${row.company_id}-${row.year}`;
       const company = row.companies;
@@ -188,7 +192,6 @@ export async function GET(request: NextRequest) {
         (parseFloat(opProfitGrowthPrevDay || '0') >= 5 || opProfitGrowthPrevDay === 'Infinity')
       );
 
-      // 주가 이격도 정보
       const priceInfo = priceDeviations.get(row.company_id) || {
         current_price: null,
         ma120: null,
@@ -207,7 +210,6 @@ export async function GET(request: NextRequest) {
         current_revenue: row.revenue,
         current_op_profit: row.operating_profit,
 
-        // 주가 및 이격도 정보
         current_price: priceInfo.current_price,
         ma120: priceInfo.ma120,
         price_deviation: priceInfo.deviation,
@@ -238,7 +240,6 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // 정렬
     if (sortBy) {
       comparisonData.sort((a: any, b: any) => {
         const parseValue = (val: any) => val === 'Infinity' ? Infinity : parseFloat(val || '0');
