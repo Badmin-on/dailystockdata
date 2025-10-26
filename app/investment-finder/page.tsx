@@ -251,12 +251,52 @@ export default function InvestmentFinderPage() {
   return (
     <div className="p-8">
       {/* 헤더 */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-center mb-2">
           <SparklesIcon className="w-8 h-8 text-yellow-400 mr-3" />
           <h1 className="text-3xl font-bold text-white">투자 기회 발굴</h1>
         </div>
         <p className="text-slate-400">컨센서스 개선 + 주가 저평가 = 투자 기회!</p>
+      </div>
+
+      {/* 년도 선택 - 눈에 띄는 상단 배치 */}
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700/50 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <ChartBarIcon className="w-5 h-5 text-blue-400 mr-2" />
+            <h2 className="text-lg font-semibold text-white">분석 년도 선택</h2>
+          </div>
+          <span className="text-sm text-slate-400">
+            선택된 년도: <span className="text-blue-400 font-semibold">{filters.year}년</span>
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {availableYears.map(year => {
+            const isSelected = filters.year === year.toString();
+            return (
+              <button
+                key={year}
+                onClick={() => setFilters(prev => ({ ...prev, year: year.toString() }))}
+                className={`
+                  px-8 py-4 rounded-xl font-semibold text-lg transition-all
+                  ${isSelected
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-2 border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
+                    : 'bg-slate-800 text-slate-300 border-2 border-slate-700 hover:border-slate-600 hover:bg-slate-700'
+                  }
+                `}
+              >
+                {year}년
+              </button>
+            );
+          })}
+        </div>
+
+        {availableYears.length === 0 && (
+          <div className="text-center py-4 text-slate-400">
+            년도 데이터를 불러오는 중...
+          </div>
+        )}
       </div>
 
       {/* 전략 설명 */}
@@ -316,21 +356,7 @@ export default function InvestmentFinderPage() {
           </button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* 연도 */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">분석 연도</label>
-            <select
-              value={filters.year}
-              onChange={(e) => setFilters(prev => ({ ...prev, year: e.target.value }))}
-              className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-            >
-              {availableYears.map(year => (
-                <option key={year} value={year}>{year}년</option>
-              ))}
-            </select>
-          </div>
-          
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* 시장 */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">시장</label>
