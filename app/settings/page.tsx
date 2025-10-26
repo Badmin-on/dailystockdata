@@ -59,6 +59,8 @@ export default function SettingsPage() {
   const [priceCollecting, setPriceCollecting] = useState(false);
   const [financialCompleted, setFinancialCompleted] = useState(false);
   const [collectionLogs, setCollectionLogs] = useState<string[]>([]);
+  const [currentProgress, setCurrentProgress] = useState<string>('');
+  const [progressPercent, setProgressPercent] = useState<number>(0);
 
   useEffect(() => {
     fetchSettings();
@@ -78,59 +80,128 @@ export default function SettingsPage() {
     }
   };
 
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('ko-KR');
-    setCollectionLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+  const setLogs = (logs: string[]) => {
+    setCollectionLogs(logs);
   };
 
+  // 진행률 polling
+  const pollProgress = async (sessionId: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const interval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/collection-progress/${sessionId}`);
+          const data = await response.json();
+
+          if (data.success && data.progress) {
+            const { progress } = data;
+            const percent = progress.total_count > 0
+              ? (progress.current_count / progress.total_count * 100).toFixed(1)
+              : '0';
+
+            setCurrentProgress(`${progress.current_count}/${progress.total_count}`);
+            setProgressPercent(parseFloat(percent));
+
+            // 로그 업데이트
+            if (progress.logs && Array.isArray(progress.logs)) {
+              setLogs(progress.logs);
+            }
+
+            // 완료 또는 실패 시 polling 중단
+            if (progress.status === 'completed' || progress.status === 'failed') {
+              clearInterval(interval);
+              resolve();
+            }
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 2000); // 2초마다 조회
+    });
+  };
+
+  // 재무 데이터 수집 (배치 방식)
   const handleCollectFinancial = async () => {
     setFinancialCollecting(true);
     setFinancialCompleted(false);
     setCollectionLogs([]);
-    addLog('재무 데이터 수집 시작...');
+    setCurrentProgress('0/1000');
+    setProgressPercent(0);
+
+    const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const TOTAL_BATCHES = 10; // 100개씩 10배치
+
+    // 진행률 polling 시작
+    const pollingPromise = pollProgress(sessionId);
 
     try {
-      const response = await fetch('/api/collect-data/manual', {
-        method: 'POST'
-      });
+      // 배치 순차 실행
+      for (let batchIndex = 0; batchIndex < TOTAL_BATCHES; batchIndex++) {
+        const response = await fetch('/api/collect-data/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            batchIndex,
+            totalBatches: TOTAL_BATCHES
+          })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.success) {
-        addLog(`✅ 재무 데이터 수집 완료!`);
-        addLog(`📊 ${data.stats.saved_companies}개 기업, ${data.stats.saved_financial_records}개 레코드 저장`);
-        addLog(`⏱️ 소요 시간: ${data.duration.minutes}분`);
-        setFinancialCompleted(true);
-      } else {
-        addLog(`❌ 수집 실패: ${data.error}`);
+        if (!data.success) {
+          throw new Error(data.error || '배치 처리 실패');
+        }
+
+        // 마지막 배치 완료 시
+        if (data.batch.isLast) {
+          await pollingPromise; // polling 완료 대기
+          setFinancialCompleted(true);
+        }
       }
     } catch (error) {
-      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Collection error:', error);
+      setLogs(prev => [...prev, `❌ 오류: ${error instanceof Error ? error.message : String(error)}`]);
     } finally {
       setFinancialCollecting(false);
     }
   };
 
+  // 주가 데이터 수집 (배치 방식)
   const handleCollectPrices = async () => {
     setPriceCollecting(true);
-    addLog('주가 데이터 수집 시작...');
+    setCurrentProgress('0/1000');
+    setProgressPercent(0);
+
+    const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const TOTAL_BATCHES = 5; // 200개씩 5배치
+
+    const pollingPromise = pollProgress(sessionId);
 
     try {
-      const response = await fetch('/api/collect-daily-prices/manual', {
-        method: 'POST'
-      });
+      for (let batchIndex = 0; batchIndex < TOTAL_BATCHES; batchIndex++) {
+        const response = await fetch('/api/collect-daily-prices/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            batchIndex,
+            totalBatches: TOTAL_BATCHES
+          })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.success) {
-        addLog(`✅ 주가 데이터 수집 완료!`);
-        addLog(`📊 ${data.stats.success_count}개 기업 주가 저장`);
-        addLog(`⏱️ 소요 시간: ${data.stats.duration_seconds}초`);
-      } else {
-        addLog(`❌ 수집 실패: ${data.error}`);
+        if (!data.success) {
+          throw new Error(data.error || '배치 처리 실패');
+        }
+
+        if (data.batch.isLast) {
+          await pollingPromise;
+        }
       }
     } catch (error) {
-      addLog(`❌ 오류 발생: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Collection error:', error);
+      setLogs(prev => [...prev, `❌ 오류: ${error instanceof Error ? error.message : String(error)}`]);
     } finally {
       setPriceCollecting(false);
     }
@@ -201,6 +272,24 @@ export default function SettingsPage() {
                   </>
                 )}
               </button>
+
+              {/* 진행률 표시 */}
+              {financialCollecting && currentProgress && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">진행률</span>
+                    <span className="text-blue-400 font-mono font-semibold">
+                      {currentProgress} ({progressPercent}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 주가 데이터 수집 */}
@@ -238,6 +327,24 @@ export default function SettingsPage() {
                   </>
                 )}
               </button>
+
+              {/* 진행률 표시 */}
+              {priceCollecting && currentProgress && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">진행률</span>
+                    <span className="text-purple-400 font-mono font-semibold">
+                      {currentProgress} ({progressPercent}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2.5">
+                    <div
+                      className="bg-purple-500 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${progressPercent}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
