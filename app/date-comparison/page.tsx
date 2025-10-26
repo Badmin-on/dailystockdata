@@ -105,6 +105,7 @@ export default function DateComparisonPage() {
         setAvailableDates(dates);
 
         // 기본값 설정 (1개월 전 ~ 최근)
+        // useEffect가 자동으로 해당 월의 데이터를 가져옴
         if (!startDate) {
           const oneMonthAgo = new Date(latest);
           oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
