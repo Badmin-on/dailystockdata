@@ -386,11 +386,29 @@ export default function OpportunitiesPage() {
                     <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
                       이격률
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
+                      1D 매출
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
+                      1D 영업익
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
                       1M 매출
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
                       1M 영업익
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
+                      3M 매출
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
+                      3M 영업익
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
+                      1Y 매출
+                    </th>
+                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
+                      1Y 영업익
                     </th>
                   </tr>
                 </thead>
@@ -446,11 +464,29 @@ export default function OpportunitiesPage() {
                       <td className={`px-4 py-3 text-center font-bold ${getDivergenceColor(row.divergence_120)}`}>
                         {formatPercent(row.divergence_120)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold ${getChangeColor(row.revenue_change_1m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.revenue_change_1d)}`}>
+                        {formatPercent(row.revenue_change_1d)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.op_profit_change_1d)}`}>
+                        {formatPercent(row.op_profit_change_1d)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.revenue_change_1m)}`}>
                         {formatPercent(row.revenue_change_1m)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold ${getChangeColor(row.op_profit_change_1m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.op_profit_change_1m)}`}>
                         {formatPercent(row.op_profit_change_1m)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.revenue_change_3m)}`}>
+                        {formatPercent(row.revenue_change_3m)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.op_profit_change_3m)}`}>
+                        {formatPercent(row.op_profit_change_3m)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.revenue_change_1y)}`}>
+                        {formatPercent(row.revenue_change_1y)}
+                      </td>
+                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.op_profit_change_1y)}`}>
+                        {formatPercent(row.op_profit_change_1y)}
                       </td>
                     </tr>
                   ))}

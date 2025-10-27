@@ -38,7 +38,7 @@ export default function DateComparisonPage() {
         metric: filters.metric,
         minGrowth: filters.minGrowth.toString()
       });
-      const response = await fetch();
+      const response = await fetch(`/api/date-comparison?${params}`);
       const result = await response.json();
       setData(result);
     } catch (error) {
