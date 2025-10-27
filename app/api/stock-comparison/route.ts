@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     if (date) {
       latestScrapeDate = date;
     } else {
-      const { data: latestData } = await supabase
+      const { data: latestData } = await supabaseAdmin
         .from('financial_data')
         .select('scrape_date')
         .order('scrape_date', { ascending: false })
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     // 개선된 날짜 비교 로직
     // 1D: 가장 최근 2개 스크랩 날짜
     // 1M/3M/1Y: 약 30/90/360일 전의 가장 가까운 실제 스크랩 날짜
-    const { data: allScrapeDates } = await supabase
+    const { data: allScrapeDates } = await supabaseAdmin
       .from('financial_data')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       return closest;
     }
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('financial_data')
       .select(`
         company_id,
@@ -172,10 +172,10 @@ export async function GET(request: NextRequest) {
     const companyIds = todayData.map((d: any) => d.company_id);
 
     const [prevDayData, oneMonthData, threeMonthData, oneYearData] = await Promise.all([
-      prevDayDate ? supabase.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', prevDayDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
-      oneMonthAgoDate ? supabase.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', oneMonthAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
-      threeMonthsAgoDate ? supabase.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', threeMonthsAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
-      oneYearAgoDate ? supabase.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', oneYearAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
+      prevDayDate ? supabaseAdmin.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', prevDayDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
+      oneMonthAgoDate ? supabaseAdmin.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', oneMonthAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
+      threeMonthsAgoDate ? supabaseAdmin.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', threeMonthsAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
+      oneYearAgoDate ? supabaseAdmin.from('financial_data').select('company_id,year,revenue,operating_profit').eq('scrape_date', oneYearAgoDate).in('company_id', companyIds) : Promise.resolve({ data: [] }),
     ]);
 
     const createMap = (data: any[]) => {
