@@ -15,13 +15,22 @@ export default function DateComparisonPage() {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
 
   useEffect(() => {
+    console.log('🔍 Fetching available dates...');
     fetch('/api/available-dates')
-      .then(res => res.json())
+      .then(res => {
+        console.log('📡 Response status:', res.status);
+        return res.json();
+      })
       .then(dates => {
+        console.log('📅 Available dates:', dates);
+        console.log('📊 Total dates:', dates?.length || 0);
         setAvailableDates(dates);
         if (dates.length >= 2) {
           setFilters(prev => ({ ...prev, startDate: dates[1], endDate: dates[0] }));
         }
+      })
+      .catch(error => {
+        console.error('❌ Error fetching dates:', error);
       });
   }, []);
 
