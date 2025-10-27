@@ -346,68 +346,77 @@ export default function OpportunitiesPage() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-            <div className="overflow-x-auto">
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 flex items-center justify-between">
+          <span className="font-semibold">💡 팁: 테이블을 좌우로 스크롤하여 모든 데이터를 확인하세요</span>
+          <span className="text-xs">→</span>
+        </div>
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+              <style jsx>{`
+                .sticky {
+                  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+                }
+              `}</style>
               <table className="min-w-full">
                 <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 z-10">
                   <tr>
-                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       순위
                     </th>
-                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       등급
                     </th>
-                    <th className="px-4 py-4 text-left text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       기업명
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       종목코드
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       시장
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       연도
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-yellow-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-yellow-50">
                       투자점수
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-blue-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-blue-50">
                       컨센서스
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-green-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-green-50">
                       이격도
                     </th>
-                    <th className="px-4 py-4 text-right text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-right text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       현재가
                     </th>
-                    <th className="px-4 py-4 text-right text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-right text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       120일평
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300">
                       이격률
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
                       1D 매출
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-red-50">
                       1D 영업익
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
                       1M 매출
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-orange-50">
                       1M 영업익
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
                       3M 매출
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-purple-50">
                       3M 영업익
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
                       1Y 매출
                     </th>
-                    <th className="px-4 py-4 text-center text-sm font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
+                    <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300 bg-indigo-50">
                       1Y 영업익
                     </th>
                   </tr>
@@ -415,50 +424,50 @@ export default function OpportunitiesPage() {
                 <tbody className="divide-y divide-gray-200">
                   {data.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 text-center font-bold text-gray-700">
+                      <td className="px-2 py-1.5 text-center font-bold text-gray-700 text-xs sticky left-0 bg-white z-10">
                         {idx + 1}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getGradeColor(row.investment_grade)}`}>
+                      <td className="px-2 py-1.5 sticky left-[60px] bg-white z-10">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${getGradeColor(row.investment_grade)}`}>
                           {row.investment_grade}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-left font-semibold text-gray-900">
+                      <td className="px-2 py-1.5 text-left font-semibold text-gray-900 text-sm sticky left-[120px] bg-white z-10">
                         {row.name}
                         {row.is_estimate && <span className="ml-2 text-xs text-blue-600">(E)</span>}
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-600 font-mono">
+                      <td className="px-2 py-1.5 text-center text-gray-600 font-mono text-xs">
                         {row.code}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-1.5 text-center">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                           {row.market}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-1.5 text-center">
                         <span className="text-sm font-semibold text-gray-700">
                           {row.year}년
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center bg-yellow-50">
-                        <span className="text-lg font-bold text-yellow-700">
+                      <td className="px-2 py-1.5 text-center bg-yellow-50">
+                        <span className="text-sm font-bold text-yellow-700">
                           {row.investment_score}점
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center bg-blue-50">
-                        <span className="font-semibold text-blue-700">
+                      <td className="px-2 py-1.5 text-center bg-blue-50">
+                        <span className="font-semibold text-blue-700 text-xs">
                           {row.consensus_score}점
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center bg-green-50">
-                        <span className="font-semibold text-green-700">
+                      <td className="px-2 py-1.5 text-center bg-green-50">
+                        <span className="font-semibold text-green-700 text-xs">
                           {row.divergence_score}점
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                      <td className="px-2 py-1.5 text-right font-semibold text-gray-900 text-xs">
                         {formatPrice(row.current_price)}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
+                      <td className="px-2 py-1.5 text-right text-gray-600 text-xs">
                         {formatPrice(row.ma_120)}
                       </td>
                       <td className={`px-4 py-3 text-center font-bold ${getDivergenceColor(row.divergence_120)}`}>
