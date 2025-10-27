@@ -69,15 +69,10 @@ export async function GET(request: NextRequest) {
     const metricColumn = metric === 'revenue' ? 'revenue' : 'operating_profit';
     const metricDisplayName = metric === 'revenue' ? '매출액' : '영업이익';
 
+    // 시작 날짜 데이터 조회
     let startQuery = supabase
       .from('financial_data')
-      .select(\`
-        company_id,
-        year,
-        \${metricColumn},
-        is_estimate,
-        companies!inner(id, name, code, market)
-      \`)
+      .select('company_id, year, ' + metricColumn + ', is_estimate, companies!inner(id, name, code, market)')
       .eq('scrape_date', actualStartDate)
       .not(metricColumn, 'is', null)
       .neq(metricColumn, 0);
@@ -98,9 +93,10 @@ export async function GET(request: NextRequest) {
 
     const companyIds = startData.map((d: any) => d.company_id);
 
+    // 종료 날짜 데이터 조회
     let endQuery = supabase
       .from('financial_data')
-      .select(\`company_id, year, \${metricColumn}, is_estimate\`)
+      .select('company_id, year, ' + metricColumn + ', is_estimate')
       .eq('scrape_date', actualEndDate)
       .in('company_id', companyIds)
       .not(metricColumn, 'is', null);
@@ -113,15 +109,16 @@ export async function GET(request: NextRequest) {
 
     if (endError) throw endError;
 
+    // 데이터 비교
     const endMap = new Map();
     endData?.forEach((item: any) => {
-      const key = \`\${item.company_id}-\${item.year}\`;
+      const key = item.company_id + '-' + item.year;
       endMap.set(key, item);
     });
 
     const comparisons = startData
       .map((startRow: any) => {
-        const key = \`\${startRow.company_id}-\${startRow.year}\`;
+        const key = startRow.company_id + '-' + startRow.year;
         const endRow = endMap.get(key);
 
         if (!endRow) return null;

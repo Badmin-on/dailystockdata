@@ -128,14 +128,14 @@ export default function DateComparisonPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.companies?.map((c: any) => (
-                    <tr key={} className="border-t">
+                  {data.companies?.map((c: any, index: number) => (
+                    <tr key={`${c.code}-${index}`} className="border-t">
                       <td className="px-4 py-2">{c.name}</td>
                       <td className="px-4 py-2 text-center">{c.code}</td>
                       <td className="px-4 py-2 text-right">{c.startValue?.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right">{c.endValue?.toFixed(2)}</td>
                       <td className="px-4 py-2 text-center">
-                        <span className={}>
+                        <span className={c.growthRate >= 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
                           {c.growthRate?.toFixed(2)}%
                         </span>
                       </td>
