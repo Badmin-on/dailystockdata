@@ -42,13 +42,20 @@ export async function GET(request: NextRequest) {
 
     const findClosestDate = async (targetDate: Date, direction: 'before' | 'after' = 'before') => {
       const targetStr = targetDate.toISOString().split('T')[0];
-      const operator = direction === 'before' ? 'lte' : 'gte';
       const ascending = direction === 'after';
 
-      const { data } = await supabase
+      // TypeScript 타입 안전성을 위해 조건문 사용
+      let query = supabaseAdmin
         .from('financial_data')
-        .select('scrape_date')
-        [operator]('scrape_date', targetStr)
+        .select('scrape_date');
+
+      if (direction === 'before') {
+        query = query.lte('scrape_date', targetStr);
+      } else {
+        query = query.gte('scrape_date', targetStr);
+      }
+
+      const { data } = await query
         .order('scrape_date', { ascending })
         .limit(1)
         .single();
@@ -70,7 +77,7 @@ export async function GET(request: NextRequest) {
     const metricDisplayName = metric === 'revenue' ? '매출액' : '영업이익';
 
     // 시작 날짜 데이터 조회
-    let startQuery = supabase
+    let startQuery = supabaseAdmin
       .from('financial_data')
       .select('company_id, year, ' + metricColumn + ', is_estimate, companies!inner(id, name, code, market)')
       .eq('scrape_date', actualStartDate)
@@ -94,7 +101,7 @@ export async function GET(request: NextRequest) {
     const companyIds = startData.map((d: any) => d.company_id);
 
     // 종료 날짜 데이터 조회
-    let endQuery = supabase
+    let endQuery = supabaseAdmin
       .from('financial_data')
       .select('company_id, year, ' + metricColumn + ', is_estimate')
       .eq('scrape_date', actualEndDate)
