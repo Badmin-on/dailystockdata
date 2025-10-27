@@ -142,6 +142,11 @@ export async function GET(request: NextRequest) {
 
         const absoluteChange = endValue - startValue;
 
+        // 변화가 없는 기업 제외
+        if (startValue === endValue) {
+          return null;
+        }
+
         if (growthRate !== null && growthRate < minGrowth) {
           return null;
         }

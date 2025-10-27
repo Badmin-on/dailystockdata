@@ -131,6 +131,7 @@ export default function DateComparisonPage() {
                   <tr>
                     <th className="px-4 py-2 text-left">기업명</th>
                     <th className="px-4 py-2 text-center">코드</th>
+                    <th className="px-4 py-2 text-center">년도</th>
                     <th className="px-4 py-2 text-right">시작값</th>
                     <th className="px-4 py-2 text-right">종료값</th>
                     <th className="px-4 py-2 text-center">성장률</th>
@@ -141,6 +142,7 @@ export default function DateComparisonPage() {
                     <tr key={`${c.code}-${index}`} className="border-t">
                       <td className="px-4 py-2">{c.name}</td>
                       <td className="px-4 py-2 text-center">{c.code}</td>
+                      <td className="px-4 py-2 text-center font-medium text-blue-600">{c.year}</td>
                       <td className="px-4 py-2 text-right">{c.startValue?.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right">{c.endValue?.toFixed(2)}</td>
                       <td className="px-4 py-2 text-center">
