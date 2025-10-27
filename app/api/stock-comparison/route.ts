@@ -92,22 +92,59 @@ export async function GET(request: NextRequest) {
       latestScrapeDate = latestData.scrape_date;
     }
 
-    const findClosestDate = async (targetDate: Date) => {
-      const { data } = await supabase
-        .from('financial_data')
-        .select('scrape_date')
-        .lte('scrape_date', targetDate.toISOString().split('T')[0])
-        .order('scrape_date', { ascending: false })
-        .limit(1)
-        .single();
-      return data?.scrape_date || null;
-    };
+    // 개선된 날짜 비교 로직
+    // 1D: 가장 최근 2개 스크랩 날짜
+    // 1M/3M/1Y: 약 30/90/360일 전의 가장 가까운 실제 스크랩 날짜
+    const { data: allScrapeDates } = await supabase
+      .from('financial_data')
+      .select('scrape_date')
+      .order('scrape_date', { ascending: false })
+      .limit(400);
 
-    const today = new Date(latestScrapeDate);
-    const prevDayDate = await findClosestDate(new Date(today.getTime() - 24 * 60 * 60 * 1000));
-    const oneMonthAgoDate = await findClosestDate(new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()));
-    const threeMonthsAgoDate = await findClosestDate(new Date(today.getFullYear(), today.getMonth() - 3, today.getDate()));
-    const oneYearAgoDate = await findClosestDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
+    const uniqueDates = [...new Set((allScrapeDates || []).map((d: any) => d.scrape_date))].sort().reverse();
+
+    let prevDayDate = null;
+    let oneMonthAgoDate = null;
+    let threeMonthsAgoDate = null;
+    let oneYearAgoDate = null;
+
+    if (uniqueDates.length >= 2) {
+      // 1D: 가장 최근 날짜와 바로 이전 날짜
+      prevDayDate = uniqueDates[1];
+
+      const latestDate = new Date(latestScrapeDate);
+
+      // 1M: 약 30일 전
+      const target1M = new Date(latestDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+      oneMonthAgoDate = findClosestDateFromList(uniqueDates, target1M);
+
+      // 3M: 약 90일 전
+      const target3M = new Date(latestDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+      threeMonthsAgoDate = findClosestDateFromList(uniqueDates, target3M);
+
+      // 1Y: 약 360일 전
+      const target1Y = new Date(latestDate.getTime() - 360 * 24 * 60 * 60 * 1000);
+      oneYearAgoDate = findClosestDateFromList(uniqueDates, target1Y);
+    }
+
+    // 목표 날짜에 가장 가까운 실제 스크랩 날짜 찾기
+    function findClosestDateFromList(dates: string[], targetDate: Date): string | null {
+      if (dates.length === 0) return null;
+
+      const targetTime = targetDate.getTime();
+      let closest = dates[0];
+      let minDiff = Math.abs(new Date(dates[0]).getTime() - targetTime);
+
+      for (const date of dates) {
+        const diff = Math.abs(new Date(date).getTime() - targetTime);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = date;
+        }
+      }
+
+      return closest;
+    }
 
     let query = supabase
       .from('financial_data')
