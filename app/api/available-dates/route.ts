@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
+    // supabaseAdmin 사용으로 RLS 우회
     // 충분히 많은 레코드를 가져와서 고유 날짜 추출
-    // 하루당 ~1,500개 레코드 × 100일 = 150,000개 필요
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('financial_data')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
