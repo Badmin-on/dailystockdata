@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 /**
  * 날짜별 비교 분석 API
@@ -145,10 +145,10 @@ export async function GET(request: NextRequest) {
           code: startRow.companies.code,
           market: startRow.companies.market,
           year: startRow.year,
-          startValue: startValue / 1e8,
-          endValue: endValue / 1e8,
+          startValue: startValue,
+          endValue: endValue,
           growthRate: growthRate ? parseFloat(growthRate.toFixed(2)) : null,
-          absoluteChange: absoluteChange / 1e8,
+          absoluteChange: absoluteChange,
           valueUnit: '억원',
           isLossToProfit: startValue < 0 && endValue > 0,
           startIsEstimate: startRow.is_estimate || false,
