@@ -424,77 +424,77 @@ export default function OpportunitiesPage() {
                 <tbody className="divide-y divide-gray-200">
                   {data.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-2 py-1.5 text-center font-bold text-gray-700 text-xs sticky left-0 bg-white z-10">
+                      <td className="px-3 py-2 text-center font-bold text-gray-700 text-xs sticky left-0 bg-white z-10 whitespace-nowrap">
                         {idx + 1}
                       </td>
-                      <td className="px-2 py-1.5 sticky left-[60px] bg-white z-10">
+                      <td className="px-3 py-2 sticky left-[60px] bg-white z-10">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${getGradeColor(row.investment_grade)}`}>
                           {row.investment_grade}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-left font-semibold text-gray-900 text-sm sticky left-[120px] bg-white z-10">
+                      <td className="px-3 py-2 text-left font-semibold text-gray-900 text-sm sticky left-[120px] bg-white z-10">
                         {row.name}
                         {row.is_estimate && <span className="ml-2 text-xs text-blue-600">(E)</span>}
                       </td>
-                      <td className="px-2 py-1.5 text-center text-gray-600 font-mono text-xs">
+                      <td className="px-3 py-2 text-center text-gray-600 font-mono text-xs whitespace-nowrap">
                         {row.code}
                       </td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="px-3 py-2 text-center whitespace-nowrap">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                           {row.market}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-center">
+                      <td className="px-3 py-2 text-center whitespace-nowrap">
                         <span className="text-sm font-semibold text-gray-700">
                           {row.year}년
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-center bg-yellow-50">
+                      <td className="px-3 py-2 text-center bg-yellow-50 whitespace-nowrap">
                         <span className="text-sm font-bold text-yellow-700">
                           {row.investment_score}점
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-center bg-blue-50">
+                      <td className="px-3 py-2 text-center bg-blue-50 whitespace-nowrap">
                         <span className="font-semibold text-blue-700 text-xs">
                           {row.consensus_score}점
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-center bg-green-50">
+                      <td className="px-3 py-2 text-center bg-green-50 whitespace-nowrap">
                         <span className="font-semibold text-green-700 text-xs">
                           {row.divergence_score}점
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 text-right font-semibold text-gray-900 text-xs">
+                      <td className="px-3 py-2 text-right font-semibold text-gray-900 text-xs whitespace-nowrap">
                         {formatPrice(row.current_price)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-gray-600 text-xs">
+                      <td className="px-3 py-2 text-right text-gray-600 text-xs whitespace-nowrap">
                         {formatPrice(row.ma_120)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-bold ${getDivergenceColor(row.divergence_120)}`}>
+                      <td className={`px-4 py-3 text-center font-bold ${getDivergenceColor(row.divergence_120)} whitespace-nowrap`}>
                         {formatPercent(row.divergence_120)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.revenue_change_1d)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.revenue_change_1d)} whitespace-nowrap`}>
                         {formatPercent(row.revenue_change_1d)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.op_profit_change_1d)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-red-50 ${getChangeColor(row.op_profit_change_1d)} whitespace-nowrap`}>
                         {formatPercent(row.op_profit_change_1d)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.revenue_change_1m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.revenue_change_1m)} whitespace-nowrap`}>
                         {formatPercent(row.revenue_change_1m)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.op_profit_change_1m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-orange-50 ${getChangeColor(row.op_profit_change_1m)} whitespace-nowrap`}>
                         {formatPercent(row.op_profit_change_1m)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.revenue_change_3m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.revenue_change_3m)} whitespace-nowrap`}>
                         {formatPercent(row.revenue_change_3m)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.op_profit_change_3m)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-purple-50 ${getChangeColor(row.op_profit_change_3m)} whitespace-nowrap`}>
                         {formatPercent(row.op_profit_change_3m)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.revenue_change_1y)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.revenue_change_1y)} whitespace-nowrap`}>
                         {formatPercent(row.revenue_change_1y)}
                       </td>
-                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.op_profit_change_1y)}`}>
+                      <td className={`px-4 py-3 text-center font-semibold bg-indigo-50 ${getChangeColor(row.op_profit_change_1y)} whitespace-nowrap`}>
                         {formatPercent(row.op_profit_change_1y)}
                       </td>
                     </tr>
