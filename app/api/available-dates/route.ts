@@ -3,33 +3,22 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    // 페이지네이션으로 여러 번 가져오기
-    // Supabase는 한 번에 최대 1000개만 반환
-    let allData: any[] = [];
-    let page = 0;
-    const pageSize = 1000;
+    // 최적화된 방식: 충분한 데이터를 한 번에 조회
+    // 각 날짜당 ~1,500개 레코드 × 100개 날짜 = 150,000개
+    // 안전하게 30,000개 조회하면 약 20개 날짜 확보
+    // 하지만 최근 데이터를 먼저 가져오므로 충분함
+    const { data, error } = await supabaseAdmin
+      .from('financial_data')
+      .select('scrape_date')
+      .order('scrape_date', { ascending: false })
+      .limit(50000);  // 50,000개면 충분히 많은 고유 날짜 확보
 
-    while (true) {
-      const { data: pageData, error: pageError } = await supabaseAdmin
-        .from('financial_data')
-        .select('scrape_date')
-        .order('scrape_date', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+    if (error) throw error;
 
-      if (pageError) throw pageError;
-      if (!pageData || pageData.length === 0) break;
+    // 고유한 날짜만 추출
+    const uniqueDates = [...new Set(data?.map(d => d.scrape_date) || [])];
 
-      allData = allData.concat(pageData);
-
-      // 충분한 고유 날짜를 찾으면 중단
-      const uniqueDates = [...new Set(allData.map(d => d.scrape_date))];
-      if (uniqueDates.length >= 100 || pageData.length < pageSize) break;
-
-      page++;
-      if (page >= 200) break; // 최대 200,000개
-    }
-
-    const uniqueDates = [...new Set(allData.map(d => d.scrape_date))];
+    // 최대 100개 반환 (이미 내림차순 정렬됨)
     return NextResponse.json(uniqueDates.slice(0, 100));
   } catch (error: any) {
     console.error('Error fetching dates:', error);
