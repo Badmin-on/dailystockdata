@@ -39,12 +39,12 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .eq('date', latestPrice?.date);
 
-    // 3. 최근 5일간 재무 데이터 수집 이력
+    // 3. 모든 재무 데이터 날짜 이력 (최대 100,000개 조회)
     const { data: recentDates } = await supabaseAdmin
       .from('financial_data')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
-      .limit(5000);
+      .limit(100000);
 
     // 고유 날짜별 레코드 수 계산
     const dateCounts: Record<string, number> = {};
@@ -54,8 +54,10 @@ export async function GET() {
 
     const recentHistory = Object.entries(dateCounts)
       .sort(([a], [b]) => b.localeCompare(a))
-      .slice(0, 5)
+      .slice(0, 50)  // 최근 50개 날짜 표시
       .map(([date, count]) => ({ date, count }));
+
+    const totalUniqueDates = Object.keys(dateCounts).length;
 
     return NextResponse.json({
       financial: {
@@ -66,6 +68,7 @@ export async function GET() {
         latest_date: latestPrice?.date,
         record_count: priceCount,
       },
+      total_unique_dates: totalUniqueDates,
       recent_history: recentHistory,
     });
   } catch (error: any) {
