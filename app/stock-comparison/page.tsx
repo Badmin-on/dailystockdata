@@ -18,40 +18,44 @@ interface StockComparison {
   is_estimate: boolean;
   is_highlighted: boolean;
   has_daily_surge: boolean;
-  
+
   // 재무 데이터
   current_revenue: number;
   current_op_profit: number;
-  
+
   // 주가 및 이격도 정보
   current_price: number | null;
   ma120: number | null;
   price_deviation: number | null;
-  
+
   // 전일 대비
   prev_day_revenue: number | null;
   prev_day_op_profit: number | null;
   revenue_growth_prev_day: string | null;
   op_profit_growth_prev_day: string | null;
-  
+  prev_day_date: string | null;
+
   // 1개월 대비
   revenue_growth_1month: string | null;
   op_profit_growth_1month: string | null;
-  
+  onemonth_ago_date: string | null;
+
   // 3개월 대비
   revenue_growth_3month: string | null;
   op_profit_growth_3month: string | null;
-  
+  threemonth_ago_date: string | null;
+
   // 1년 대비
   revenue_growth_1year: string | null;
   op_profit_growth_1year: string | null;
+  oneyear_ago_date: string | null;
 }
 
 export default function StockComparisonPage() {
   const [data, setData] = useState<StockComparison[]>([]);
   const [filteredData, setFilteredData] = useState<StockComparison[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // 필터 상태
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMarket, setSelectedMarket] = useState<string>('ALL');
@@ -62,8 +66,21 @@ export default function StockComparisonPage() {
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
   const [enableDeviationFilter, setEnableDeviationFilter] = useState<boolean>(false);
   const [showOnlyWithPrice, setShowOnlyWithPrice] = useState<boolean>(false);
-  
+
   const [availableYears, setAvailableYears] = useState<number[]>([]);
+
+  // 비교 날짜 정보
+  const [comparisonDates, setComparisonDates] = useState<{
+    prevDayDate: string | null;
+    oneMonthAgoDate: string | null;
+    threeMonthsAgoDate: string | null;
+    oneYearAgoDate: string | null;
+  }>({
+    prevDayDate: null,
+    oneMonthAgoDate: null,
+    threeMonthsAgoDate: null,
+    oneYearAgoDate: null,
+  });
 
   useEffect(() => {
     fetchAvailableYears();
@@ -102,10 +119,21 @@ export default function StockComparisonPage() {
       if (selectedYear) params.append('year', selectedYear);
       params.append('sortBy', sortBy);
       params.append('sortOrder', sortOrder);
-      
+
       const response = await fetch(`/api/stock-comparison?${params}`);
       const result = await response.json();
       setData(result);
+
+      // 비교 날짜 정보 추출 (첫 번째 데이터에서)
+      if (result && result.length > 0) {
+        const firstItem = result[0];
+        setComparisonDates({
+          prevDayDate: firstItem.prev_day_date || null,
+          oneMonthAgoDate: firstItem.onemonth_ago_date || null,
+          threeMonthsAgoDate: firstItem.threemonth_ago_date || null,
+          oneYearAgoDate: firstItem.oneyear_ago_date || null,
+        });
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -369,6 +397,59 @@ export default function StockComparisonPage() {
             <option value="DESC">높은 순</option>
             <option value="ASC">낮은 순</option>
           </select>
+        </div>
+      </div>
+
+      {/* 비교 기준일 정보 */}
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700/50 p-6 mb-6">
+        <div className="flex items-center mb-4">
+          <ChartBarIcon className="w-5 h-5 text-blue-400 mr-2" />
+          <h2 className="text-lg font-semibold text-white">비교 기준일 정보</h2>
+          <span className="ml-3 text-xs text-slate-400">
+            (데이터가 존재하는 가장 근접한 날짜로 자동 선택됨)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* 전일 비교 */}
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+            <p className="text-xs text-orange-300 font-semibold mb-1 uppercase">전일 대비</p>
+            <p className="text-lg font-bold text-white">
+              {comparisonDates.prevDayDate
+                ? new Date(comparisonDates.prevDayDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '-'}
+            </p>
+          </div>
+
+          {/* 1개월 비교 */}
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+            <p className="text-xs text-yellow-300 font-semibold mb-1 uppercase">1개월 대비</p>
+            <p className="text-lg font-bold text-white">
+              {comparisonDates.oneMonthAgoDate
+                ? new Date(comparisonDates.oneMonthAgoDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '-'}
+            </p>
+          </div>
+
+          {/* 3개월 비교 */}
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <p className="text-xs text-green-300 font-semibold mb-1 uppercase">3개월 대비</p>
+            <p className="text-lg font-bold text-white">
+              {comparisonDates.threeMonthsAgoDate
+                ? new Date(comparisonDates.threeMonthsAgoDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '-'}
+            </p>
+          </div>
+
+          {/* 1년 비교 */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <p className="text-xs text-blue-300 font-semibold mb-1 uppercase">1년 대비</p>
+            <p className="text-lg font-bold text-white">
+              {comparisonDates.oneYearAgoDate
+                ? new Date(comparisonDates.oneYearAgoDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+                : '-'}
+            </p>
+          </div>
         </div>
       </div>
 
