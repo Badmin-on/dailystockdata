@@ -67,8 +67,13 @@ export default function StockComparisonPage() {
 
   useEffect(() => {
     fetchAvailableYears();
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    if (selectedYear) {
+      fetchData();
+    }
+  }, [selectedYear, sortBy, sortOrder]);
 
   useEffect(() => {
     applyFilters();
@@ -80,7 +85,10 @@ export default function StockComparisonPage() {
       const years = await response.json();
       setAvailableYears(years);
       if (years.length > 0) {
-        setSelectedYear(years[0].toString());
+        // 2025년을 기본값으로 선택 (실제 데이터가 있는 연도)
+        // 2025년이 없으면 가장 최근 과거 연도 선택
+        const targetYear = years.includes(2025) ? 2025 : Math.min(...years.filter((y: number) => y <= new Date().getFullYear()));
+        setSelectedYear(targetYear.toString());
       }
     } catch (error) {
       console.error('Error fetching years:', error);
