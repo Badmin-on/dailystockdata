@@ -14,7 +14,8 @@
       "Bash(node:*)",
       "Bash(curl:*)",
       "Bash(echo:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Read(//c/Users/nebad/Pictures/Screenshots/**)"
     ],
     "deny": [],
     "ask": []
