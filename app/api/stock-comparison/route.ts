@@ -140,11 +140,14 @@ export async function GET(request: NextRequest) {
     // IMPORTANT: year 필터는 비교 데이터 조회 시에만 적용!
     // 날짜 리스트는 전체 scrape_date에서 가져와야 함
     // 이유: 하나의 scrape_date에 여러 연도(2024,2025,2026,2027) 데이터가 모두 존재
+
+    // limit을 크게 설정: 77개 날짜 x ~4000개 레코드/날짜 = 최소 30만 필요
+    // 하지만 최근 100개 날짜면 충분하므로 100 x 5000 = 50만으로 설정
     const { data: allScrapeDates } = await supabaseAdmin
       .from('financial_data')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
-      .limit(400);
+      .limit(500000);
 
     const uniqueDates = [...new Set((allScrapeDates || []).map((d: any) => d.scrape_date))].sort().reverse();
 
