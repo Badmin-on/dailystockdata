@@ -139,16 +139,21 @@ export async function GET(request: NextRequest) {
     // 개선된 날짜 비교 로직
     // 1D: 가장 최근 2개 스크랩 날짜
     // 1M/3M/1Y: 약 30/90/360일 전의 가장 가까운 실제 스크랩 날짜
+
+    // IMPORTANT: year 필터를 먼저 적용한 후 order/limit 적용
+    // 순서가 잘못되면 limit된 레코드에서만 필터링되어 날짜가 누락됨
     let scrapeDatesQuery = supabaseAdmin
       .from('financial_data')
-      .select('scrape_date')
-      .order('scrape_date', { ascending: false })
-      .limit(400);
+      .select('scrape_date');
 
     // year 파라미터가 있으면 해당 연도 데이터가 있는 날짜만 가져오기
     if (year) {
       scrapeDatesQuery = scrapeDatesQuery.eq('year', parseInt(year));
     }
+
+    scrapeDatesQuery = scrapeDatesQuery
+      .order('scrape_date', { ascending: false })
+      .limit(400);
 
     const { data: allScrapeDates } = await scrapeDatesQuery;
 
