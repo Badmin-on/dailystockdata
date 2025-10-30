@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get('year');
     const sortBy = searchParams.get('sortBy');
     const sortOrder = searchParams.get('sortOrder') || 'DESC';
+    const debug = searchParams.get('debug') === 'true';
 
     let latestScrapeDate: string;
     if (date) {
@@ -156,6 +157,13 @@ export async function GET(request: NextRequest) {
     console.log(`📅 Year ${year || 'all'}: ${uniqueDates.length} unique dates found`);
     console.log(`   First 5 dates: ${uniqueDates.slice(0, 5).join(', ')}`);
 
+    const debugInfo: any = {
+      latestScrapeDate,
+      year,
+      uniqueDatesCount: uniqueDates.length,
+      uniqueDatesFirst10: uniqueDates.slice(0, 10),
+    };
+
     let prevDayDate = null;
     let oneMonthAgoDate = null;
     let threeMonthsAgoDate = null;
@@ -180,13 +188,26 @@ export async function GET(request: NextRequest) {
       const target1Y = new Date(latestDate.getTime() - 360 * 24 * 60 * 60 * 1000);
       oneYearAgoDate = findClosestDateFromList(uniqueDates, target1Y);
 
+      debugInfo.comparisonDates = {
+        prevDayDate,
+        oneMonthAgoDate,
+        threeMonthsAgoDate,
+        oneYearAgoDate
+      };
+
       console.log(`   Comparison dates found:`);
       console.log(`   - Prev day: ${prevDayDate}`);
       console.log(`   - 1 month: ${oneMonthAgoDate}`);
       console.log(`   - 3 months: ${threeMonthsAgoDate}`);
       console.log(`   - 1 year: ${oneYearAgoDate}`);
     } else {
+      debugInfo.warning = `Not enough dates (${uniqueDates.length}) for comparison`;
       console.log(`⚠️  Not enough dates (${uniqueDates.length}) for comparison`);
+    }
+
+    // Debug mode: return debug info only
+    if (debug) {
+      return NextResponse.json({ debug: debugInfo });
     }
 
     // 목표 날짜에 가장 가까운 실제 스크랩 날짜 찾기
