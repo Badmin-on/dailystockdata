@@ -92,12 +92,18 @@ export async function GET(request: NextRequest) {
     if (date) {
       latestScrapeDate = date;
     } else {
-      const { data: latestData } = await supabaseAdmin
+      // year 파라미터가 있으면 해당 연도의 최신 데이터 날짜 조회
+      let latestQuery = supabaseAdmin
         .from('financial_data')
         .select('scrape_date')
         .order('scrape_date', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      if (year) {
+        latestQuery = latestQuery.eq('year', parseInt(year));
+      }
+
+      const { data: latestData } = await latestQuery.single();
 
       if (!latestData) {
         return NextResponse.json([]);
