@@ -147,12 +147,16 @@ export async function GET(request: NextRequest) {
 
     const uniqueDates = [...new Set((allScrapeDates || []).map((d: any) => d.scrape_date))].sort().reverse();
 
+    console.log(`📅 Year ${year || 'all'}: ${uniqueDates.length} unique dates found`);
+    console.log(`   First 5 dates: ${uniqueDates.slice(0, 5).join(', ')}`);
+
     let prevDayDate = null;
     let oneMonthAgoDate = null;
     let threeMonthsAgoDate = null;
     let oneYearAgoDate = null;
 
     if (uniqueDates.length >= 2) {
+      console.log(`✅ Finding comparison dates (latest: ${latestScrapeDate})...`);
       // 1D: 가장 최근 날짜와 바로 이전 날짜
       prevDayDate = uniqueDates[1];
 
@@ -169,6 +173,14 @@ export async function GET(request: NextRequest) {
       // 1Y: 약 360일 전
       const target1Y = new Date(latestDate.getTime() - 360 * 24 * 60 * 60 * 1000);
       oneYearAgoDate = findClosestDateFromList(uniqueDates, target1Y);
+
+      console.log(`   Comparison dates found:`);
+      console.log(`   - Prev day: ${prevDayDate}`);
+      console.log(`   - 1 month: ${oneMonthAgoDate}`);
+      console.log(`   - 3 months: ${threeMonthsAgoDate}`);
+      console.log(`   - 1 year: ${oneYearAgoDate}`);
+    } else {
+      console.log(`⚠️  Not enough dates (${uniqueDates.length}) for comparison`);
     }
 
     // 목표 날짜에 가장 가까운 실제 스크랩 날짜 찾기
