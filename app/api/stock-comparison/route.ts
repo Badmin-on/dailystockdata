@@ -41,22 +41,35 @@ async function calculatePriceDeviations(
       batchIds.forEach(companyId => {
         const companyPrices = pricesByCompany.get(companyId);
 
-        if (!companyPrices || companyPrices.length < 120) {
+        if (!companyPrices || companyPrices.length === 0) {
           deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
           return;
         }
 
-        const last120Prices = companyPrices.slice(0, 120);
-        const prices = last120Prices.map((row: any) => parseFloat(row.close_price));
-        const ma120 = prices.reduce((sum: number, price: number) => sum + price, 0) / 120;
+        // 최소 1개 데이터가 있으면 현재가는 표시
+        const prices = companyPrices.map((row: any) => parseFloat(row.close_price));
         const currentPrice = prices[0];
-        const deviation = ((currentPrice / ma120) * 100 - 100);
 
-        deviations.set(companyId, {
-          current_price: currentPrice,
-          ma120: parseFloat(ma120.toFixed(2)),
-          deviation: parseFloat(deviation.toFixed(2))
-        });
+        // 120일 이상 데이터가 있으면 이격도 계산
+        if (companyPrices.length >= 120) {
+          const last120Prices = companyPrices.slice(0, 120);
+          const prices120 = last120Prices.map((row: any) => parseFloat(row.close_price));
+          const ma120 = prices120.reduce((sum: number, price: number) => sum + price, 0) / 120;
+          const deviation = ((currentPrice / ma120) * 100 - 100);
+
+          deviations.set(companyId, {
+            current_price: currentPrice,
+            ma120: parseFloat(ma120.toFixed(2)),
+            deviation: parseFloat(deviation.toFixed(2))
+          });
+        } else {
+          // 120일 미만이면 현재가만 표시
+          deviations.set(companyId, {
+            current_price: currentPrice,
+            ma120: null,
+            deviation: null
+          });
+        }
       });
     } catch (error) {
       console.error(`Error batch ${i / BATCH_SIZE + 1}:`, error);
