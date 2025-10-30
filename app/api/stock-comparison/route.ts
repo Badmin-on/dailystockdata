@@ -92,6 +92,30 @@ export async function GET(request: NextRequest) {
       latestScrapeDate = latestData.scrape_date;
     }
 
+    // 주가 데이터 날짜 확인 및 fallback
+    // 해당 날짜의 주가 데이터가 없으면 가장 최근 주가 날짜 사용
+    let priceReferenceDate = latestScrapeDate;
+
+    const { count: priceCount } = await supabaseAdmin
+      .from('daily_stock_prices')
+      .select('*', { count: 'exact', head: true })
+      .eq('date', latestScrapeDate);
+
+    if (!priceCount || priceCount === 0) {
+      // 주가 데이터가 없으면 가장 최근 주가 날짜 사용
+      const { data: latestPriceData } = await supabaseAdmin
+        .from('daily_stock_prices')
+        .select('date')
+        .order('date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestPriceData) {
+        priceReferenceDate = latestPriceData.date;
+        console.log(`주가 데이터 fallback: ${latestScrapeDate} → ${priceReferenceDate}`);
+      }
+    }
+
     // 개선된 날짜 비교 로직
     // 1D: 가장 최근 2개 스크랩 날짜
     // 1M/3M/1Y: 약 30/90/360일 전의 가장 가까운 실제 스크랩 날짜
@@ -192,7 +216,7 @@ export async function GET(request: NextRequest) {
     const threeMonthMap = createMap(threeMonthData.data || []);
     const oneYearMap = createMap(oneYearData.data || []);
 
-    const priceDeviations = await calculatePriceDeviations(companyIds, latestScrapeDate);
+    const priceDeviations = await calculatePriceDeviations(companyIds, priceReferenceDate);
 
     const calculateGrowth = (current: number | null, previous: number | null) => {
       if (current == null || previous == null || previous === 0) return null;
@@ -250,6 +274,7 @@ export async function GET(request: NextRequest) {
         current_price: priceInfo.current_price,
         ma120: priceInfo.ma120,
         price_deviation: priceInfo.deviation,
+        price_reference_date: priceReferenceDate, // 주가 기준 날짜
 
         prev_day_revenue: prevDayRecord?.revenue || null,
         prev_day_op_profit: prevDayRecord?.operating_profit || null,
