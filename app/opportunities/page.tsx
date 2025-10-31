@@ -345,11 +345,162 @@ export default function OpportunitiesPage() {
             <p className="text-gray-500 text-lg">조건에 맞는 투자 기회가 없습니다</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 flex items-center justify-between">
-          <span className="font-semibold">💡 팁: 테이블을 좌우로 스크롤하여 모든 데이터를 확인하세요</span>
-          <span className="text-xs">→</span>
-        </div>
+          <>
+            {/* 모바일 카드뷰 */}
+            <div className="lg:hidden space-y-4">
+              {data.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-xl shadow-lg border border-gray-200 p-4"
+                >
+                  {/* 헤더: 순위, 등급, 기업명 */}
+                  <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-200">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-gray-500 font-bold text-sm">#{idx + 1}</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getGradeColor(row.investment_grade)}`}>
+                          {row.investment_grade}
+                        </span>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                          {row.market}
+                        </span>
+                      </div>
+                      <p className="text-gray-900 font-bold text-lg leading-tight">
+                        {row.name}
+                        {row.is_estimate && <span className="ml-2 text-xs text-blue-600">(E)</span>}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {row.code} · {row.year}년
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 점수 섹션 */}
+                  <div className="grid grid-cols-3 gap-2 mb-3 pb-3 border-b border-gray-200">
+                    <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-3 text-center">
+                      <p className="text-xs text-white opacity-90 font-semibold mb-1">투자점수</p>
+                      <p className="text-2xl font-bold text-white">{row.investment_score}점</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg p-3 text-center">
+                      <p className="text-xs text-white opacity-90 font-semibold mb-1">컨센서스</p>
+                      <p className="text-xl font-bold text-white">{row.consensus_score}점</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-lg p-3 text-center">
+                      <p className="text-xs text-white opacity-90 font-semibold mb-1">이격도</p>
+                      <p className="text-xl font-bold text-white">{row.divergence_score}점</p>
+                    </div>
+                  </div>
+
+                  {/* 주가 정보 */}
+                  {row.current_price && (
+                    <div className="mb-3 pb-3 border-b border-gray-200">
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">현재가</p>
+                          <p className="text-sm font-bold text-gray-900">{formatPrice(row.current_price)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">120일평</p>
+                          <p className="text-sm font-semibold text-gray-600">{formatPrice(row.ma_120)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">이격률</p>
+                          <p className={`text-sm font-bold ${getDivergenceColor(row.divergence_120)}`}>
+                            {formatPercent(row.divergence_120)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 변화율 섹션 */}
+                  <div className="space-y-2">
+                    {/* 1일 변화 */}
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+                      <p className="text-xs text-red-700 font-semibold mb-1.5">1일 변화율</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">매출: </span>
+                          <span className={`font-semibold ${getChangeColor(row.revenue_change_1d)}`}>
+                            {formatPercent(row.revenue_change_1d)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">영익: </span>
+                          <span className={`font-semibold ${getChangeColor(row.op_profit_change_1d)}`}>
+                            {formatPercent(row.op_profit_change_1d)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 1개월 변화 */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-2">
+                      <p className="text-xs text-orange-700 font-semibold mb-1.5">1개월 변화율</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">매출: </span>
+                          <span className={`font-semibold ${getChangeColor(row.revenue_change_1m)}`}>
+                            {formatPercent(row.revenue_change_1m)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">영익: </span>
+                          <span className={`font-semibold ${getChangeColor(row.op_profit_change_1m)}`}>
+                            {formatPercent(row.op_profit_change_1m)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3개월 변화 */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-2">
+                      <p className="text-xs text-purple-700 font-semibold mb-1.5">3개월 변화율</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">매출: </span>
+                          <span className={`font-semibold ${getChangeColor(row.revenue_change_3m)}`}>
+                            {formatPercent(row.revenue_change_3m)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">영익: </span>
+                          <span className={`font-semibold ${getChangeColor(row.op_profit_change_3m)}`}>
+                            {formatPercent(row.op_profit_change_3m)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 1년 변화 */}
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2">
+                      <p className="text-xs text-indigo-700 font-semibold mb-1.5">1년 변화율</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600">매출: </span>
+                          <span className={`font-semibold ${getChangeColor(row.revenue_change_1y)}`}>
+                            {formatPercent(row.revenue_change_1y)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">영익: </span>
+                          <span className={`font-semibold ${getChangeColor(row.op_profit_change_1y)}`}>
+                            {formatPercent(row.op_profit_change_1y)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 데스크톱 테이블 */}
+            <div className="hidden lg:block bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+              <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-sm text-blue-700 flex items-center justify-between">
+                <span className="font-semibold">💡 팁: 테이블을 좌우로 스크롤하여 모든 데이터를 확인하세요</span>
+                <span className="text-xs">→</span>
+              </div>
             <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
               <style jsx>{`
                 .sticky {
@@ -502,7 +653,8 @@ export default function OpportunitiesPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>
