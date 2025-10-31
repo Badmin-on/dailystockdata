@@ -359,13 +359,13 @@ export default function OpportunitiesPage() {
               <table className="min-w-full">
                 <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300 min-w-[50px]">
                       순위
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300 min-w-[90px]">
                       등급
                     </th>
-                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300">
+                    <th className="px-2 py-2 text-left text-xs font-bold text-gray-700 border-b-2 border-gray-300 min-w-[150px]">
                       기업명
                     </th>
                     <th className="px-2 py-2 text-center text-xs font-bold text-gray-700 border-b-2 border-gray-300">
@@ -424,15 +424,15 @@ export default function OpportunitiesPage() {
                 <tbody className="divide-y divide-gray-200">
                   {data.map((row, idx) => (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-3 py-2 text-center font-bold text-gray-700 text-xs sticky left-0 bg-white z-10 whitespace-nowrap">
+                      <td className="px-3 py-2 text-center font-bold text-gray-700 text-xs sticky left-0 bg-white z-10 whitespace-nowrap min-w-[50px]">
                         {idx + 1}
                       </td>
-                      <td className="px-3 py-2 sticky left-[60px] bg-white z-10">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${getGradeColor(row.investment_grade)}`}>
+                      <td className="px-3 py-2 sticky left-[50px] bg-white z-10 min-w-[90px]">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${getGradeColor(row.investment_grade)}`}>
                           {row.investment_grade}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-left font-semibold text-gray-900 text-sm sticky left-[120px] bg-white z-10">
+                      <td className="px-3 py-2 text-left font-semibold text-gray-900 text-sm sticky left-[140px] bg-white z-10 min-w-[150px] whitespace-nowrap">
                         {row.name}
                         {row.is_estimate && <span className="ml-2 text-xs text-blue-600">(E)</span>}
                       </td>
