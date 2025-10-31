@@ -9,10 +9,9 @@ export default function MainContent({ children }: { children: ReactNode }) {
 
   return (
     <main
-      className={`min-h-screen transition-all duration-300
-        lg:${collapsed ? 'ml-20' : 'ml-64'}
-        ml-0
-      `}
+      className={`min-h-screen transition-all duration-300 ml-0 ${
+        collapsed ? 'lg:ml-20' : 'lg:ml-64'
+      }`}
       style={{
         width: typeof window !== 'undefined' && window.innerWidth >= 1024
           ? (collapsed ? 'calc(100vw - 5rem)' : 'calc(100vw - 16rem)')
