@@ -75,15 +75,26 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function Sidebar() {
-  const { collapsed, setCollapsed } = useSidebar();
+  const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const pathname = usePathname();
 
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 ${
-        collapsed ? 'w-20' : 'w-64'
-      }`}
-    >
+    <>
+      {/* 모바일 오버레이 */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-screen transition-all duration-300 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50
+          ${collapsed ? 'w-20' : 'w-64'}
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
         {/* 로고 영역 */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700/50">
           {!collapsed && (
@@ -119,6 +130,7 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 href={item.path}
+                onClick={() => setMobileOpen(false)}
                 className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group relative ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/30'
@@ -173,5 +185,6 @@ export default function Sidebar() {
           </div>
         )}
       </aside>
+    </>
   );
 }
