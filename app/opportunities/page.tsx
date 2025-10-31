@@ -162,22 +162,22 @@ export default function OpportunitiesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
       <div className="max-w-[1920px] mx-auto">
         {/* 헤더 */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
                 🎯 투자 기회 발굴
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm lg:text-base text-gray-600">
                 재무 컨센서스 변화 + 120일 이평선 이격도 기반 투자 분석
               </p>
             </div>
             <Link
               href="/dashboard"
-              className="px-6 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all"
+              className="px-4 py-2 lg:px-6 lg:py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all text-sm lg:text-base text-center"
             >
               ← 기본 대시보드
             </Link>
@@ -185,8 +185,8 @@ export default function OpportunitiesPage() {
         </div>
 
         {/* 필터 패널 */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 mb-6 border border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 분석 년도
@@ -266,16 +266,16 @@ export default function OpportunitiesPage() {
             </div>
           </div>
 
-          <div className="flex gap-3 mt-4">
+          <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <button
               onClick={handleApplyFilters}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all"
+              className="flex-1 px-4 py-2 lg:px-6 lg:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all text-sm lg:text-base"
             >
               🔍 필터 적용
             </button>
             <button
               onClick={handleReset}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-all"
+              className="px-4 py-2 lg:px-6 lg:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-all text-sm lg:text-base"
             >
               초기화
             </button>
@@ -283,36 +283,36 @@ export default function OpportunitiesPage() {
         </div>
 
         {/* 통계 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-semibold opacity-90 mb-2">S급 기회</div>
-            <div className="text-3xl font-bold">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+          <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+            <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">S급 기회</div>
+            <div className="text-2xl lg:text-3xl font-bold">
               {data.filter(d => d.investment_grade === 'S급').length}개
             </div>
           </div>
-          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-semibold opacity-90 mb-2">A급 기회</div>
-            <div className="text-3xl font-bold">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+            <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">A급 기회</div>
+            <div className="text-2xl lg:text-3xl font-bold">
               {data.filter(d => d.investment_grade === 'A급').length}개
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-semibold opacity-90 mb-2">평균 투자 점수</div>
-            <div className="text-3xl font-bold">
+          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+            <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">평균 투자 점수</div>
+            <div className="text-2xl lg:text-3xl font-bold">
               {data.length > 0
                 ? (data.reduce((sum, d) => sum + d.investment_score, 0) / data.length).toFixed(1)
                 : '0'}점
             </div>
           </div>
-          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-white shadow-lg">
-            <div className="text-sm font-semibold opacity-90 mb-2">총 발굴 기업</div>
-            <div className="text-3xl font-bold">{data.length}개</div>
+          <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+            <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">총 발굴 기업</div>
+            <div className="text-2xl lg:text-3xl font-bold">{data.length}개</div>
           </div>
         </div>
 
         {/* 범례 */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3 lg:p-4 mb-4 lg:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 lg:gap-3 text-xs lg:text-sm">
             <div>
               <span className="font-bold text-blue-900">컨센서스 점수:</span>
               <span className="text-gray-700 ml-2">1개월 변화율 기반 (매출액/영업이익)</span>
@@ -336,13 +336,13 @@ export default function OpportunitiesPage() {
 
         {/* 데이터 테이블 */}
         {loading ? (
-          <div className="bg-white rounded-xl shadow-lg p-16 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-500 text-lg">투자 기회 분석 중...</p>
+          <div className="bg-white rounded-xl shadow-lg p-8 lg:p-16 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 lg:h-16 lg:w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500 text-base lg:text-lg">투자 기회 분석 중...</p>
           </div>
         ) : data.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-lg p-16 text-center">
-            <p className="text-gray-500 text-lg">조건에 맞는 투자 기회가 없습니다</p>
+          <div className="bg-white rounded-xl shadow-lg p-8 lg:p-16 text-center">
+            <p className="text-gray-500 text-base lg:text-lg">조건에 맞는 투자 기회가 없습니다</p>
           </div>
         ) : (
           <>
