@@ -143,29 +143,29 @@ export default function MonitorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-6">
       <div className="max-w-[1920px] mx-auto">
         {/* 헤더 */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
                 📊 YoonStock Pro - 성장 기업 모니터링
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm lg:text-base text-gray-600">
                 실시간 데이터 수집 현황 및 투자 기회 분석 대시보드
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 lg:gap-3">
               <Link
                 href="/opportunities"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all"
+                className="px-4 py-2 lg:px-6 lg:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-md transition-all text-sm lg:text-base text-center"
               >
                 🎯 투자 기회
               </Link>
               <Link
                 href="/dashboard"
-                className="px-6 py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all"
+                className="px-4 py-2 lg:px-6 lg:py-3 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-gray-700 shadow-sm transition-all text-sm lg:text-base text-center"
               >
                 📈 기본 대시보드
               </Link>
@@ -177,34 +177,34 @@ export default function MonitorPage() {
         {dataStatus && (
           <>
             {/* 핵심 지표 카드 */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-sm font-semibold opacity-90 mb-2">총 기업 수</div>
-                <div className="text-3xl font-bold">{dataStatus.overall.total_companies.toLocaleString()}개</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+                <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">총 기업 수</div>
+                <div className="text-2xl lg:text-3xl font-bold">{dataStatus.overall.total_companies.toLocaleString()}개</div>
                 <div className="text-xs opacity-75 mt-2">
                   KOSPI {dataStatus.markets.kospi.total} | KOSDAQ {dataStatus.markets.kosdaq.total}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-sm font-semibold opacity-90 mb-2">재무 데이터</div>
-                <div className="text-3xl font-bold">{dataStatus.overall.total_financial_records.toLocaleString()}건</div>
+              <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+                <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">재무 데이터</div>
+                <div className="text-2xl lg:text-3xl font-bold">{dataStatus.overall.total_financial_records.toLocaleString()}건</div>
                 <div className="text-xs opacity-75 mt-2">
                   커버리지: {dataStatus.collection_progress.financial_coverage}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-sm font-semibold opacity-90 mb-2">주가 데이터</div>
-                <div className="text-3xl font-bold">{dataStatus.overall.total_price_records.toLocaleString()}건</div>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+                <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">주가 데이터</div>
+                <div className="text-2xl lg:text-3xl font-bold">{dataStatus.overall.total_price_records.toLocaleString()}건</div>
                 <div className="text-xs opacity-75 mt-2">
                   {dataStatus.overall.companies_with_prices}개 기업 수집 완료
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
-                <div className="text-sm font-semibold opacity-90 mb-2">120일 이평선</div>
-                <div className="text-3xl font-bold">
+              <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
+                <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">120일 이평선</div>
+                <div className="text-2xl lg:text-3xl font-bold">
                   {dataStatus.overall.estimated_companies_with_120day}개
                 </div>
                 <div className="text-xs opacity-75 mt-2">
@@ -298,12 +298,12 @@ export default function MonitorPage() {
             </div>
 
             {/* 상위 투자 기회 (Top 20) */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div className="bg-white rounded-xl shadow-lg p-4 lg:p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">🔥 상위 투자 기회 (Top 20)</h2>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-800">🔥 상위 투자 기회 (Top 20)</h2>
                 <Link
                   href="/opportunities"
-                  className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
+                  className="text-blue-600 hover:text-blue-700 font-semibold text-xs lg:text-sm"
                 >
                   전체 보기 →
                 </Link>
@@ -311,11 +311,97 @@ export default function MonitorPage() {
 
               {opportunities.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">투자 기회 데이터가 없습니다</p>
-                  <p className="text-sm text-gray-400 mt-2">View 갱신 후 데이터가 표시됩니다</p>
+                  <p className="text-gray-500 text-sm lg:text-base">투자 기회 데이터가 없습니다</p>
+                  <p className="text-xs lg:text-sm text-gray-400 mt-2">View 갱신 후 데이터가 표시됩니다</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                  {/* 모바일 카드뷰 */}
+                  <div className="lg:hidden space-y-4">
+                    {opportunities.slice(0, 20).map((row, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-xl shadow-lg border border-gray-200 p-4"
+                      >
+                        {/* 헤더: 순위, 등급, 기업명 */}
+                        <div className="flex items-start justify-between mb-3 pb-3 border-b border-gray-200">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-gray-500 font-bold text-sm">#{idx + 1}</span>
+                              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getGradeColor(row.investment_grade)}`}>
+                                {row.investment_grade}
+                              </span>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                row.market === 'KOSPI' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                              }`}>
+                                {row.market}
+                              </span>
+                            </div>
+                            <p className="text-gray-900 font-bold text-lg leading-tight">
+                              {row.name}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">{row.code}</p>
+                          </div>
+                        </div>
+
+                        {/* 점수 섹션 */}
+                        <div className="grid grid-cols-3 gap-2 mb-3 pb-3 border-b border-gray-200">
+                          <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-3 text-center">
+                            <p className="text-xs text-white opacity-90 font-semibold mb-1">투자점수</p>
+                            <p className="text-2xl font-bold text-white">{row.investment_score}점</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg p-3 text-center">
+                            <p className="text-xs text-white opacity-90 font-semibold mb-1">컨센서스</p>
+                            <p className="text-xl font-bold text-white">{row.consensus_score}점</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-lg p-3 text-center">
+                            <p className="text-xs text-white opacity-90 font-semibold mb-1">이격도</p>
+                            <p className="text-xl font-bold text-white">{row.divergence_score}점</p>
+                          </div>
+                        </div>
+
+                        {/* 주가 정보 */}
+                        {row.current_price && (
+                          <div className="mb-3 pb-3 border-b border-gray-200">
+                            <div className="grid grid-cols-2 gap-3 text-center">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">현재가</p>
+                                <p className="text-sm font-bold text-gray-900">{formatPrice(row.current_price)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">이격률</p>
+                                <p className={`text-sm font-bold ${getDivergenceColor(row.divergence_120)}`}>
+                                  {formatPercent(row.divergence_120)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 1개월 변화율 */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-2">
+                          <p className="text-xs text-orange-700 font-semibold mb-1.5">1개월 변화율</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-gray-600">매출: </span>
+                              <span className="font-semibold text-orange-600">
+                                {formatPercent(row.revenue_change_1m)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">영익: </span>
+                              <span className="font-semibold text-red-600">
+                                {formatPercent(row.op_profit_change_1m)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 데스크톱 테이블 */}
+                  <div className="hidden lg:block overflow-x-auto">
                   <table className="min-w-full">
                     <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
                       <tr>
@@ -374,7 +460,8 @@ export default function MonitorPage() {
                       ))}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </div>
           </>
