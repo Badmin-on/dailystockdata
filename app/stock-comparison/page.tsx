@@ -221,6 +221,14 @@ export default function StockComparisonPage() {
     return 'bg-green-500/20';
   };
 
+  const getGrowthColor = (value: string | null): string => {
+    if (!value || value === '-') return 'text-slate-400';
+    const numValue = parseFloat(value);
+    if (numValue > 0) return 'text-red-400';
+    if (numValue < 0) return 'text-blue-400';
+    return 'text-slate-400';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -532,13 +540,13 @@ export default function StockComparisonPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-slate-400">매출: </span>
-                    <span className={parseFloat(item.revenue_growth_prev_day || '0') >= 5 ? 'text-red-400 font-bold' : parseFloat(item.revenue_growth_prev_day || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_prev_day)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_prev_day)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400">영익: </span>
-                    <span className={parseFloat(item.op_profit_growth_prev_day || '0') >= 5 ? 'text-red-400 font-bold' : parseFloat(item.op_profit_growth_prev_day || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_prev_day)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_prev_day)}
                     </span>
                   </div>
@@ -551,13 +559,13 @@ export default function StockComparisonPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-slate-400">매출: </span>
-                    <span className={parseFloat(item.revenue_growth_1month || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_1month)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_1month)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400">영익: </span>
-                    <span className={parseFloat(item.op_profit_growth_1month || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_1month)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_1month)}
                     </span>
                   </div>
@@ -570,13 +578,13 @@ export default function StockComparisonPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-slate-400">매출: </span>
-                    <span className={parseFloat(item.revenue_growth_3month || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_3month)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_3month)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400">영익: </span>
-                    <span className={parseFloat(item.op_profit_growth_3month || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_3month)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_3month)}
                     </span>
                   </div>
@@ -589,13 +597,13 @@ export default function StockComparisonPage() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-slate-400">매출: </span>
-                    <span className={parseFloat(item.revenue_growth_1year || '0') >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-semibold'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_1year)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_1year)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400">영익: </span>
-                    <span className={parseFloat(item.op_profit_growth_1year || '0') >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-semibold'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_1year)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_1year)}
                     </span>
                   </div>
@@ -678,42 +686,42 @@ export default function StockComparisonPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.revenue_growth_prev_day || '0') >= 5 ? 'text-red-400 font-bold' : parseFloat(item.revenue_growth_prev_day || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_prev_day)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_prev_day)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.op_profit_growth_prev_day || '0') >= 5 ? 'text-red-400 font-bold' : parseFloat(item.op_profit_growth_prev_day || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_prev_day)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_prev_day)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.revenue_growth_1month || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_1month)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_1month)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.op_profit_growth_1month || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_1month)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_1month)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.revenue_growth_3month || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_3month)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_3month)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.op_profit_growth_3month || '0') >= 0 ? 'text-green-400' : 'text-slate-500'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_3month)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_3month)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.revenue_growth_1year || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-red-400'}>
+                    <span className={`${getGrowthColor(item.revenue_growth_1year)} font-semibold`}>
                       {formatGrowth(item.revenue_growth_1year)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span className={parseFloat(item.op_profit_growth_1year || '0') >= 0 ? 'text-green-400 font-semibold' : 'text-red-400'}>
+                    <span className={`${getGrowthColor(item.op_profit_growth_1year)} font-semibold`}>
                       {formatGrowth(item.op_profit_growth_1year)}
                     </span>
                   </td>
