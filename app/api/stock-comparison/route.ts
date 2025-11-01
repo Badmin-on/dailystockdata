@@ -2,80 +2,43 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 /**
- * 주가 이격도 계산 (120일 이평선 기준) - 배치 처리 최적화
- * 성능 개선: 1,794개 순차 쿼리 → ~18개 배치 쿼리
+ * 주가 이격도 계산 - mv_stock_analysis Materialized View 활용
+ * 성능 개선: 40초 배치 쿼리 → <1초 단일 SELECT
+ * 일관성: /opportunities API와 동일한 데이터 소스 사용
  */
 async function calculatePriceDeviations(
   companyIds: number[],
   referenceDate: string
 ): Promise<Map<number, { current_price: number | null; ma120: number | null; deviation: number | null }>> {
-  const deviations = new Map();
-  const BATCH_SIZE = 100;
+  const { data: stockAnalysisData, error } = await supabaseAdmin
+    .from('mv_stock_analysis')
+    .select('company_id, current_price, ma_120, divergence_120')
+    .in('company_id', companyIds);
 
-  for (let i = 0; i < companyIds.length; i += BATCH_SIZE) {
-    const batchIds = companyIds.slice(i, i + BATCH_SIZE);
-
-    try {
-      const { data: allPriceData, error } = await supabaseAdmin
-        .from('daily_stock_prices')
-        .select('company_id, close_price, date')
-        .in('company_id', batchIds)
-        .lte('date', referenceDate)
-        .order('company_id', { ascending: true })
-        .order('date', { ascending: false });
-
-      if (error) {
-        console.error(`Batch error (${i / BATCH_SIZE + 1}):`, error);
-        batchIds.forEach(id => deviations.set(id, { current_price: null, ma120: null, deviation: null }));
-        continue;
-      }
-
-      const pricesByCompany = new Map<number, any[]>();
-      allPriceData?.forEach((row: any) => {
-        if (!pricesByCompany.has(row.company_id)) {
-          pricesByCompany.set(row.company_id, []);
-        }
-        pricesByCompany.get(row.company_id)!.push(row);
-      });
-
-      batchIds.forEach(companyId => {
-        const companyPrices = pricesByCompany.get(companyId);
-
-        if (!companyPrices || companyPrices.length === 0) {
-          deviations.set(companyId, { current_price: null, ma120: null, deviation: null });
-          return;
-        }
-
-        // 최소 1개 데이터가 있으면 현재가는 표시
-        const prices = companyPrices.map((row: any) => parseFloat(row.close_price));
-        const currentPrice = prices[0];
-
-        // 120일 이상 데이터가 있으면 이격도 계산
-        if (companyPrices.length >= 120) {
-          const last120Prices = companyPrices.slice(0, 120);
-          const prices120 = last120Prices.map((row: any) => parseFloat(row.close_price));
-          const ma120 = prices120.reduce((sum: number, price: number) => sum + price, 0) / 120;
-          const deviation = ((currentPrice / ma120) * 100 - 100);
-
-          deviations.set(companyId, {
-            current_price: currentPrice,
-            ma120: parseFloat(ma120.toFixed(2)),
-            deviation: parseFloat(deviation.toFixed(2))
-          });
-        } else {
-          // 120일 미만이면 현재가만 표시
-          deviations.set(companyId, {
-            current_price: currentPrice,
-            ma120: null,
-            deviation: null
-          });
-        }
-      });
-    } catch (error) {
-      console.error(`Error batch ${i / BATCH_SIZE + 1}:`, error);
-      batchIds.forEach(id => deviations.set(id, { current_price: null, ma120: null, deviation: null }));
-    }
+  if (error) {
+    console.error('❌ Error fetching from mv_stock_analysis:', error);
+    return new Map();
   }
+
+  console.log(`✅ Fetched ${stockAnalysisData?.length || 0} price records from mv_stock_analysis`);
+
+  const deviations = new Map();
+
+  // mv_stock_analysis 데이터를 Map에 저장
+  stockAnalysisData?.forEach((row: any) => {
+    deviations.set(row.company_id, {
+      current_price: row.current_price,
+      ma120: row.ma_120,
+      deviation: row.divergence_120
+    });
+  });
+
+  // companyIds에 있지만 stockAnalysisData에 없는 회사들은 null 처리
+  companyIds.forEach(id => {
+    if (!deviations.has(id)) {
+      deviations.set(id, { current_price: null, ma120: null, deviation: null });
+    }
+  });
 
   return deviations;
 }
