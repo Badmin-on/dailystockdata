@@ -1,0 +1,27 @@
+{
+  "name": "stock-data-scrapers",
+  "version": "1.0.0",
+  "description": "Automated stock data collection scripts for FnGuide and Naver Finance",
+  "main": "index.js",
+  "scripts": {
+    "fnguide": "node fnguide-scraper.js",
+    "stock-price": "node stock-price-scraper.js",
+    "all": "npm run fnguide && npm run stock-price"
+  },
+  "keywords": [
+    "stock",
+    "scraper",
+    "fnguide",
+    "naver-finance",
+    "supabase"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "iconv-lite": "^0.6.3"
+  }
+}
