@@ -121,7 +121,8 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
         const companyRecords = allStockData.map(stock => ({
             name: stock.name,
             code: stock.code,
-            market: stock.market
+            market: stock.market,
+            is_etf: false  // FnGuide는 일반 주식만 수집
         }));
 
         // 중복 code 체크
