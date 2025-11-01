@@ -140,7 +140,8 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
             .select('id, code');
 
         if (companiesError) {
-            throw new Error(`Companies 저장 실패: ${companiesError.message}`);
+            console.error('❌ Companies 저장 상세 오류:', JSON.stringify(companiesError, null, 2));
+            throw new Error(`Companies 저장 실패: ${companiesError.message} | Code: ${companiesError.code} | Details: ${companiesError.details}`);
         }
 
         savedCompanies = companiesData.length;
