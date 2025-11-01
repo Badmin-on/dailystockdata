@@ -14,7 +14,8 @@ import {
   ChevronRightIcon,
   CircleStackIcon,
   ClockIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  RectangleGroupIcon
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -45,6 +46,12 @@ const menuItems: MenuItem[] = [
     name: '수집 현황',
     path: '/collection-status',
     icon: ArrowPathIcon,
+    badge: 'NEW'
+  },
+  {
+    name: 'ETF 모니터링',
+    path: '/etf-monitoring',
+    icon: RectangleGroupIcon,
     badge: 'NEW'
   },
   {
