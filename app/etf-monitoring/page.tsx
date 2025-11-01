@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+
+// Next.js 15에서 동적 페이지로 설정 (API 호출 사용)
+export const dynamic = 'force-dynamic';
 
 interface ETFData {
   name: string;
@@ -36,7 +38,6 @@ interface ProviderSummary {
 }
 
 export default function ETFMonitoringPage() {
-  const searchParams = useSearchParams();
   const [etfData, setEtfData] = useState<ETFData[]>([]);
   const [summaryData, setSummaryData] = useState<ProviderSummary[]>([]);
   const [loading, setLoading] = useState(true);
