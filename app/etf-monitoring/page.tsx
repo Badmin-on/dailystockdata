@@ -10,6 +10,7 @@ interface ETFData {
   code: string;
   market: string;
   provider: string;
+  sector: string | null;
   current_price: number | null;
   ma_120: number | null;
   price_deviation: number | null;
@@ -42,6 +43,7 @@ export default function ETFMonitoringPage() {
   const [summaryData, setSummaryData] = useState<ProviderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState<string>('ALL');
+  const [selectedSector, setSelectedSector] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('provider');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
@@ -54,6 +56,7 @@ export default function ETFMonitoringPage() {
         // ETF 목록 조회
         const etfParams = new URLSearchParams({
           provider: selectedProvider,
+          sector: selectedSector,
           search: searchTerm,
           sortBy,
           sortOrder
@@ -74,7 +77,7 @@ export default function ETFMonitoringPage() {
     };
 
     fetchData();
-  }, [selectedProvider, searchTerm, sortBy, sortOrder]);
+  }, [selectedProvider, selectedSector, searchTerm, sortBy, sortOrder]);
 
   // 포맷 헬퍼 함수
   const formatNumber = (value: number | null): string => {
@@ -190,7 +193,7 @@ export default function ETFMonitoringPage() {
 
         {/* 필터 및 검색 */}
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* 운용사 필터 */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">운용사</label>
@@ -206,6 +209,30 @@ export default function ETFMonitoringPage() {
                 <option value="RISE">RISE</option>
                 <option value="SOL">SOL</option>
                 <option value="HANARO">HANARO</option>
+              </select>
+            </div>
+
+            {/* 섹터 필터 */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">섹터</label>
+              <select
+                value={selectedSector}
+                onChange={(e) => setSelectedSector(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">전체</option>
+                <option value="채권">채권</option>
+                <option value="국내지수">국내지수</option>
+                <option value="해외지수-미국">해외지수-미국</option>
+                <option value="반도체">반도체</option>
+                <option value="2차전지">2차전지</option>
+                <option value="바이오/헬스케어">바이오/헬스케어</option>
+                <option value="IT/소프트웨어">IT/소프트웨어</option>
+                <option value="금융">금융</option>
+                <option value="배당">배당</option>
+                <option value="원자재/상품">원자재/상품</option>
+                <option value="부동산/리츠">부동산/리츠</option>
+                <option value="기타">기타</option>
               </select>
             </div>
 
@@ -263,6 +290,9 @@ export default function ETFMonitoringPage() {
                     운용사
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    섹터
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                     종목명
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -288,13 +318,13 @@ export default function ETFMonitoringPage() {
               <tbody className="divide-y divide-slate-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                       데이터 로딩 중...
                     </td>
                   </tr>
                 ) : etfData.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                       검색 결과가 없습니다.
                     </td>
                   </tr>
@@ -303,6 +333,9 @@ export default function ETFMonitoringPage() {
                     <tr key={index} className="hover:bg-slate-700/30 transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm font-medium text-blue-400">{etf.provider}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-sm text-slate-400">{etf.sector || '-'}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm font-medium text-white">{etf.name}</div>
@@ -357,7 +390,12 @@ export default function ETFMonitoringPage() {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <span className="text-xs font-medium text-blue-400">{etf.provider}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-blue-400">{etf.provider}</span>
+                      {etf.sector && (
+                        <span className="text-xs text-slate-500">• {etf.sector}</span>
+                      )}
+                    </div>
                     <h3 className="text-base font-bold text-white mt-1">{etf.name}</h3>
                     <p className="text-xs text-slate-400">{etf.code}</p>
                   </div>

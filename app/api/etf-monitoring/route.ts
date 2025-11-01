@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const provider = searchParams.get('provider'); // 운용사 필터
+    const sector = searchParams.get('sector'); // 섹터 필터
     const searchTerm = searchParams.get('search'); // 검색어
     const sortBy = searchParams.get('sortBy') || 'etf_provider';
     const sortOrder = searchParams.get('sortOrder') || 'ASC';
@@ -16,12 +17,17 @@ export async function GET(request: NextRequest) {
     // ETF 목록 조회 (companies 테이블)
     let etfQuery = supabaseAdmin
       .from('companies')
-      .select('id, name, code, market, etf_provider')
+      .select('id, name, code, market, etf_provider, etf_sector')
       .eq('is_etf', true);
 
     // 운용사 필터
     if (provider && provider !== 'ALL') {
       etfQuery = etfQuery.eq('etf_provider', provider);
+    }
+
+    // 섹터 필터
+    if (sector && sector !== 'ALL') {
+      etfQuery = etfQuery.eq('etf_sector', sector);
     }
 
     // 검색 필터
@@ -82,6 +88,7 @@ export async function GET(request: NextRequest) {
         code: etf.code,
         market: etf.market,
         provider: etf.etf_provider,
+        sector: etf.etf_sector,
         current_price: priceInfo.current_price,
         ma_120: priceInfo.ma_120,
         price_deviation: priceInfo.divergence_120,
@@ -92,7 +99,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 정렬
-    const validSortColumns = ['name', 'provider', 'current_price', 'price_deviation', 'change_rate', 'volume'];
+    const validSortColumns = ['name', 'provider', 'sector', 'current_price', 'price_deviation', 'change_rate', 'volume'];
 
     if (validSortColumns.includes(sortBy)) {
       combinedData.sort((a, b) => {
