@@ -53,7 +53,7 @@ SELECT
 SELECT
   COUNT(*) as total_etfs,
   COUNT(*) FILTER (WHERE etf_provider IS NOT NULL) as has_provider,
-  COUNT(*) FILTER (WHERE etf_sector IS NOT NULL) as has_sector,
+  -- COUNT(*) FILTER (WHERE etf_sector IS NOT NULL) as has_sector,  -- etf_sector 컬럼 생성 전에는 주석 처리
   STRING_AGG(DISTINCT etf_provider, ', ') as providers
 FROM companies
 WHERE is_etf = TRUE;
