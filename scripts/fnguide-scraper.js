@@ -119,10 +119,15 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
     try {
         // 🔍 Supabase 연결 테스트
         console.log('\n🔍 Supabase 연결 상태 확인...');
-        console.log('  - SUPABASE_URL 존재:', !!process.env.SUPABASE_URL || !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-        console.log('  - SUPABASE_SERVICE_KEY 존재:', !!process.env.SUPABASE_SERVICE_KEY);
-        console.log('  - URL 길이:', (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').length);
-        console.log('  - KEY 길이:', (process.env.SUPABASE_SERVICE_KEY || '').length);
+        const actualUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const actualKey = process.env.SUPABASE_SERVICE_KEY;
+
+        console.log('  - SUPABASE_URL 존재:', !!actualUrl);
+        console.log('  - SUPABASE_SERVICE_KEY 존재:', !!actualKey);
+        console.log('  - URL 길이:', (actualUrl || '').length);
+        console.log('  - KEY 길이:', (actualKey || '').length);
+        console.log('  - URL 값 (마지막 20자):', actualUrl ? '...' + actualUrl.slice(-20) : 'null');
+        console.log('  - URL에 slash 포함:', actualUrl ? actualUrl.includes('/dashboard') || actualUrl.endsWith('/') : false);
 
         // 간단한 SELECT 쿼리로 연결 테스트
         console.log('  - 연결 테스트 중...');
