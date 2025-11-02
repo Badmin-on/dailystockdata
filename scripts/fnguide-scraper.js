@@ -117,6 +117,28 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
     let savedFinancialRecords = 0;
 
     try {
+        // 🔍 Supabase 연결 테스트
+        console.log('\n🔍 Supabase 연결 상태 확인...');
+        console.log('  - SUPABASE_URL 존재:', !!process.env.SUPABASE_URL || !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+        console.log('  - SUPABASE_SERVICE_KEY 존재:', !!process.env.SUPABASE_SERVICE_KEY);
+        console.log('  - URL 길이:', (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').length);
+        console.log('  - KEY 길이:', (process.env.SUPABASE_SERVICE_KEY || '').length);
+
+        // 간단한 SELECT 쿼리로 연결 테스트
+        console.log('  - 연결 테스트 중...');
+        const { data: testData, error: testError } = await supabase
+            .from('companies')
+            .select('id')
+            .limit(1);
+
+        if (testError) {
+            console.error('❌ Supabase 연결 테스트 실패:', JSON.stringify(testError, null, 2));
+            throw new Error(`Supabase 연결 실패: ${testError.message || 'Unknown error'}`);
+        }
+
+        console.log('✅ Supabase 연결 성공!');
+        console.log('');
+
         // 1. companies 테이블에 기업 정보 저장 (upsert로 중복 방지)
         const companyRecords = allStockData.map(stock => ({
             name: stock.name,
