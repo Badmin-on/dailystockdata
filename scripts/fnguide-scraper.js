@@ -139,9 +139,17 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
             })
             .select('id, code');
 
+        console.log('🔍 Supabase 응답 확인:');
+        console.log('  - companiesData:', companiesData ? `${companiesData.length}개` : 'null');
+        console.log('  - companiesError:', companiesError ? 'Error 있음' : 'null');
+
         if (companiesError) {
             console.error('❌ Companies 저장 상세 오류:', JSON.stringify(companiesError, null, 2));
-            throw new Error(`Companies 저장 실패: ${companiesError.message} | Code: ${companiesError.code} | Details: ${companiesError.details}`);
+            throw new Error(`Companies 저장 실패: ${companiesError.message || 'Unknown error'} | Code: ${companiesError.code} | Details: ${companiesError.details || 'No details'}`);
+        }
+
+        if (!companiesData || companiesData.length === 0) {
+            throw new Error('Companies 저장 실패: 반환된 데이터가 없습니다 (companiesData is null or empty)');
         }
 
         savedCompanies = companiesData.length;
