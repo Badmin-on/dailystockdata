@@ -295,8 +295,8 @@ export default function CollectionStatusPage() {
             <div>
               <p className="text-slate-400 text-sm mb-1">최근 업데이트</p>
               <p className="text-2xl font-bold text-white">
-                {status.data.price_data.latest_update 
-                  ? new Date(status.data.price_data.latest_update).toLocaleString('ko-KR')
+                {status.data.price_data.latest_update
+                  ? new Date(status.data.price_data.latest_update).toISOString().split('T')[0]
                   : 'N/A'}
               </p>
             </div>
@@ -307,8 +307,8 @@ export default function CollectionStatusPage() {
         <div className="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
           <h3 className="text-lg font-bold text-blue-400 mb-2">ℹ️ 수집 정보</h3>
           <ul className="text-slate-300 space-y-2">
-            <li>• <strong>재무 데이터</strong>: 매주 일요일 23:00 KST 자동 수집</li>
-            <li>• <strong>주가 데이터</strong>: 평일 20:00 KST 자동 수집 (장 마감 후)</li>
+            <li>• <strong>재무 데이터</strong>: 매일 오전 7:00 KST 자동 수집 (GitHub Actions)</li>
+            <li>• <strong>주가 데이터</strong>: 매일 오후 7:00 KST 자동 수집 (GitHub Actions)</li>
             <li>• <strong>수집 대상</strong>: KOSPI 상위 500개 + KOSDAQ 상위 500개 = 1,000개 기업</li>
             <li>• <strong>자동 갱신</strong>: 이 페이지는 10초마다 자동으로 업데이트됩니다</li>
           </ul>
