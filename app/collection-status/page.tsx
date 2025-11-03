@@ -122,52 +122,54 @@ export default function CollectionStatusPage() {
   const pricePercent = status.data.price_data.progress_percent;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+        <div className="mb-6 md:mb-8">
+          <div className="mb-4">
+            <h1 className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
               📊 데이터 수집 현황
             </h1>
-            <p className="text-slate-400 mt-2">실시간 데이터 수집 진행 상황 모니터링</p>
+            <p className="text-slate-400 mt-2 text-sm md:text-base">실시간 데이터 수집 진행 상황 모니터링</p>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-slate-500">마지막 업데이트</p>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex-1">
+              <p className="text-xs text-slate-500">마지막 업데이트</p>
               <p className="text-slate-300 font-mono text-sm">
                 {lastUpdate.toLocaleTimeString('ko-KR')}
               </p>
             </div>
-            
-            <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                autoRefresh
-                  ? 'bg-green-600 hover:bg-green-500 text-white'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-              }`}
-            >
-              {autoRefresh ? '🔄 자동 갱신 ON' : '⏸️ 자동 갱신 OFF'}
-            </button>
-            
-            <button
-              onClick={fetchStatus}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowPathIcon className={`h-5 w-5 inline mr-2 ${loading ? 'animate-spin' : ''}`} />
-              새로고침
-            </button>
+
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-lg font-medium text-sm transition ${
+                  autoRefresh
+                    ? 'bg-green-600 hover:bg-green-500 text-white'
+                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                }`}
+              >
+                {autoRefresh ? '🔄 자동 갱신 ON' : '⏸️ 자동 갱신 OFF'}
+              </button>
+
+              <button
+                onClick={fetchStatus}
+                disabled={loading}
+                className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowPathIcon className={`h-4 w-4 md:h-5 md:w-5 inline mr-1 md:mr-2 ${loading ? 'animate-spin' : ''}`} />
+                새로고침
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Overall Status Card */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">전체 현황</h2>
-            <div className={`px-4 py-2 rounded-full font-bold ${
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4 md:p-8 mb-6 md:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-white">전체 현황</h2>
+            <div className={`px-3 md:px-4 py-1.5 md:py-2 rounded-full font-bold text-sm md:text-base ${
               status.data.overall.status === 'COMPLETE'
                 ? 'bg-green-500/20 text-green-400 border border-green-500'
                 : 'bg-blue-500/20 text-blue-400 border border-blue-500 animate-pulse'
@@ -176,14 +178,14 @@ export default function CollectionStatusPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {/* Total Companies */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-2">전체 기업 수</p>
-              <p className="text-4xl font-bold text-white mb-1">
+            <div className="bg-slate-900/50 rounded-lg p-4 md:p-6 border border-slate-700">
+              <p className="text-slate-400 text-xs md:text-sm mb-2">전체 기업 수</p>
+              <p className="text-3xl md:text-4xl font-bold text-white mb-1">
                 {status.data.companies.total.toLocaleString()}
               </p>
-              <div className="flex gap-4 text-sm mt-4">
+              <div className="flex gap-3 md:gap-4 text-xs md:text-sm mt-3 md:mt-4">
                 <span className="text-blue-400">
                   KOSPI: {status.data.companies.kospi}
                 </span>
@@ -194,23 +196,23 @@ export default function CollectionStatusPage() {
             </div>
 
             {/* Financial Coverage */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-2">재무 데이터 수집률</p>
-              <p className={`text-4xl font-bold mb-1 ${getStatusColor(financialPercent)}`}>
+            <div className="bg-slate-900/50 rounded-lg p-4 md:p-6 border border-slate-700">
+              <p className="text-slate-400 text-xs md:text-sm mb-2">재무 데이터 수집률</p>
+              <p className={`text-3xl md:text-4xl font-bold mb-1 ${getStatusColor(financialPercent)}`}>
                 {status.data.overall.financial_coverage}
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-500 text-xs md:text-sm">
                 {status.data.financial_data.companies_count} / {status.data.financial_data.target} 기업
               </p>
             </div>
 
             {/* Price Coverage */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
-              <p className="text-slate-400 text-sm mb-2">주가 데이터 수집률</p>
-              <p className={`text-4xl font-bold mb-1 ${getStatusColor(pricePercent)}`}>
+            <div className="bg-slate-900/50 rounded-lg p-4 md:p-6 border border-slate-700">
+              <p className="text-slate-400 text-xs md:text-sm mb-2">주가 데이터 수집률</p>
+              <p className={`text-3xl md:text-4xl font-bold mb-1 ${getStatusColor(pricePercent)}`}>
                 {status.data.overall.price_coverage}
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-500 text-xs md:text-sm">
                 {status.data.price_data.companies_count} / {status.data.price_data.target} 기업
               </p>
             </div>
@@ -218,18 +220,18 @@ export default function CollectionStatusPage() {
         </div>
 
         {/* Financial Data Details */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">📈 재무 데이터 수집 현황</h2>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4 md:p-8 mb-6 md:mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">📈 재무 데이터 수집 현황</h2>
           
           {/* Progress Bar */}
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <div className="flex justify-between mb-2">
-              <span className="text-slate-400 text-sm">진행률</span>
-              <span className={`font-bold ${getStatusColor(financialPercent)}`}>
+              <span className="text-slate-400 text-xs md:text-sm">진행률</span>
+              <span className={`font-bold text-sm md:text-base ${getStatusColor(financialPercent)}`}>
                 {financialPercent.toFixed(1)}%
               </span>
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden">
+            <div className="w-full bg-slate-700 rounded-full h-3 md:h-4 overflow-hidden">
               <div
                 className={`h-full transition-all duration-500 ${getProgressBarColor(financialPercent)}`}
                 style={{ width: `${Math.min(financialPercent, 100)}%` }}
@@ -237,22 +239,22 @@ export default function CollectionStatusPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <div>
-              <p className="text-slate-400 text-sm mb-1">수집 기업 수</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">수집 기업 수</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.financial_data.companies_count.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">총 레코드 수</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">총 레코드 수</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.financial_data.total_records.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">최근 업데이트</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">최근 업데이트</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.financial_data.latest_update || 'N/A'}
               </p>
             </div>
@@ -260,18 +262,18 @@ export default function CollectionStatusPage() {
         </div>
 
         {/* Price Data Details */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8">
-          <h2 className="text-2xl font-bold text-white mb-6">💹 주가 데이터 수집 현황</h2>
-          
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4 md:p-8">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6">💹 주가 데이터 수집 현황</h2>
+
           {/* Progress Bar */}
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <div className="flex justify-between mb-2">
-              <span className="text-slate-400 text-sm">진행률</span>
-              <span className={`font-bold ${getStatusColor(pricePercent)}`}>
+              <span className="text-slate-400 text-xs md:text-sm">진행률</span>
+              <span className={`font-bold text-sm md:text-base ${getStatusColor(pricePercent)}`}>
                 {pricePercent.toFixed(1)}%
               </span>
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden">
+            <div className="w-full bg-slate-700 rounded-full h-3 md:h-4 overflow-hidden">
               <div
                 className={`h-full transition-all duration-500 ${getProgressBarColor(pricePercent)}`}
                 style={{ width: `${Math.min(pricePercent, 100)}%` }}
@@ -279,22 +281,22 @@ export default function CollectionStatusPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <div>
-              <p className="text-slate-400 text-sm mb-1">수집 기업 수</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">수집 기업 수</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.price_data.companies_count.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">총 레코드 수</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">총 레코드 수</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.price_data.total_records.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-sm mb-1">최근 업데이트</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-slate-400 text-xs md:text-sm mb-1">최근 업데이트</p>
+              <p className="text-xl md:text-2xl font-bold text-white">
                 {status.data.price_data.latest_update
                   ? new Date(status.data.price_data.latest_update).toISOString().split('T')[0]
                   : 'N/A'}
@@ -304,9 +306,9 @@ export default function CollectionStatusPage() {
         </div>
 
         {/* Info Box */}
-        <div className="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-blue-400 mb-2">ℹ️ 수집 정보</h3>
-          <ul className="text-slate-300 space-y-2">
+        <div className="mt-6 md:mt-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-bold text-blue-400 mb-2 md:mb-3">ℹ️ 수집 정보</h3>
+          <ul className="text-slate-300 space-y-2 text-sm md:text-base">
             <li>• <strong>재무 데이터</strong>: 매일 오전 7:00 KST 자동 수집 (GitHub Actions)</li>
             <li>• <strong>주가 데이터</strong>: 매일 오후 7:00 KST 자동 수집 (GitHub Actions)</li>
             <li>• <strong>수집 대상</strong>: KOSPI 상위 500개 + KOSDAQ 상위 500개 = 1,000개 기업</li>
