@@ -142,9 +142,10 @@ async function savePriceToSupabase(company, priceData) {
 // --- 메인 실행 로직 ---
 async function main() {
     const startTime = Date.now();
-    // 로컬 시간 기준으로 날짜 생성 (한국 시간대)
+    // 한국 시간 기준으로 날짜 생성 (UTC+9)
     const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    const today = `${koreaTime.getFullYear()}-${String(koreaTime.getMonth() + 1).padStart(2, '0')}-${String(koreaTime.getDate()).padStart(2, '0')}`;
 
     console.log(`\n🚀 주가 데이터 수집 시작: ${today}`);
     console.log(`📊 배치 크기: ${CONCURRENT_BATCH_SIZE}개씩 동시 처리\n`);

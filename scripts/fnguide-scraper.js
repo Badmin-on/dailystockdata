@@ -295,9 +295,10 @@ const saveToSupabase = async (allStockData, scrapeDate) => {
  */
 async function main() {
     const startTime = Date.now();
-    // 로컬 시간 기준으로 날짜 생성 (한국 시간대)
+    // 한국 시간 기준으로 날짜 생성 (UTC+9)
     const now = new Date();
-    const scrapeDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const koreaTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    const scrapeDate = `${koreaTime.getFullYear()}-${String(koreaTime.getMonth() + 1).padStart(2, '0')}-${String(koreaTime.getDate()).padStart(2, '0')}`;
 
     try {
         console.log(`\n${'='.repeat(60)}`);
