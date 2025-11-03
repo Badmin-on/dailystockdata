@@ -84,19 +84,7 @@ export default function Home() {
               </div>
 
               {/* 대시보드 바로가기 버튼 */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <button
-                  onClick={() => router.push('/admin/collect')}
-                  className="px-8 py-4 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg hover:from-red-600 hover:to-red-800 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl">🔧</span>
-                    <div className="text-left">
-                      <div>데이터 수집</div>
-                      <div className="text-xs font-normal opacity-90">재무 + 주가 데이터</div>
-                    </div>
-                  </div>
-                </button>
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   onClick={() => router.push('/monitor')}
                   className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-lg hover:from-purple-600 hover:to-purple-800 font-bold text-lg shadow-xl transition-all transform hover:scale-105"
@@ -168,19 +156,6 @@ export default function Home() {
               </div>
             )}
 
-            {status.tables && status.tables.financial_data < 200000 && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded">
-                <div className="flex items-center gap-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-600"></div>
-                  <p className="text-yellow-800 font-medium">
-                    데이터 마이그레이션 진행 중... (백그라운드 실행)
-                  </p>
-                </div>
-                <p className="text-yellow-700 text-sm mt-2">
-                  약 61개 파일, 예상 소요 시간: 30-60분
-                </p>
-              </div>
-            )}
           </div>
         ) : (
           <div className="bg-red-50 rounded-lg shadow-md p-12 text-center">
@@ -188,32 +163,6 @@ export default function Home() {
             <p className="text-gray-600 mt-2">{status?.message || '알 수 없는 오류'}</p>
           </div>
         )}
-
-        <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">🚀 다음 단계</h3>
-          <ul className="space-y-2 text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-green-500 mt-1">✅</span>
-              <span>Next.js 프로젝트 생성 완료</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-green-500 mt-1">✅</span>
-              <span>Supabase 연결 완료</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-green-500 mt-1">✅</span>
-              <span>대시보드 UI 구현 완료</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-yellow-500 mt-1">🔄</span>
-              <span>기존 데이터 마이그레이션 진행 중</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-gray-400 mt-1">⏳</span>
-              <span>Vercel 배포 예정</span>
-            </li>
-          </ul>
-        </div>
       </div>
     </main>
   );
