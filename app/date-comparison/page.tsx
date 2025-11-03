@@ -61,40 +61,26 @@ export default function DateComparisonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <CalendarIcon className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-800">날짜별 컨센서스 변화 추적</h1>
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3 mb-2">
+            <CalendarIcon className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+            <h1 className="text-xl md:text-3xl font-bold text-gray-800">날짜별 컨센서스 변화 추적</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             두 날짜를 선택하여 기업들의 컨센서스(예상치) 변화를 추적하세요.
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">시작 날짜</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">시작 날짜</label>
               <select
                 value={filters.startDate}
                 onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg"
-              >
-                <option value="">선택하세요</option>
-                {availableDates.map(date => (
-                  <option key={date} value={date}>{date}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">종료 날짜</label>
-              <select
-                value={filters.endDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-lg"
               >
                 <option value="">선택하세요</option>
                 {availableDates.map(date => (
@@ -104,11 +90,25 @@ export default function DateComparisonPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">비교 년도</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">종료 날짜</label>
+              <select
+                value={filters.endDate}
+                onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                className="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-lg"
+              >
+                <option value="">선택하세요</option>
+                {availableDates.map(date => (
+                  <option key={date} value={date}>{date}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">비교 년도</label>
               <select
                 value={filters.year}
                 onChange={(e) => setFilters(prev => ({ ...prev, year: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 {availableYears.map(year => (
                   <option key={year} value={year}>{year}년</option>
@@ -117,11 +117,11 @@ export default function DateComparisonPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">비교 지표</label>
+              <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">비교 지표</label>
               <select
                 value={filters.metric}
                 onChange={(e) => setFilters(prev => ({ ...prev, metric: e.target.value }))}
-                className="w-full px-4 py-2 border rounded-lg"
+                className="w-full px-3 md:px-4 py-2 text-sm md:text-base border rounded-lg"
               >
                 <option value="operating_profit">영업이익</option>
                 <option value="revenue">매출액</option>
@@ -132,16 +132,49 @@ export default function DateComparisonPage() {
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg"
+            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 md:py-3 px-4 md:px-6 rounded-lg text-sm md:text-base"
           >
             {loading ? '분석 중...' : '컨센서스 변화 분석'}
           </button>
         </div>
 
         {data && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold mb-4">분석 결과: {data.totalCompanies}개 기업</h2>
-            <div className="overflow-x-auto">
+          <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-bold mb-4">분석 결과: {data.totalCompanies}개 기업</h2>
+
+            {/* 모바일 카드 레이아웃 */}
+            <div className="md:hidden space-y-3">
+              {data.companies?.map((c: any, index: number) => (
+                <div key={`${c.code}-${index}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800 text-base mb-1">{c.name}</h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{c.code}</span>
+                        <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{c.year}년</span>
+                      </div>
+                    </div>
+                    <div className={`text-xl font-bold ${c.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {c.growthRate >= 0 ? '▲' : '▼'} {Math.abs(c.growthRate)?.toFixed(2)}%
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-300">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">시작값</p>
+                      <p className="text-sm font-semibold text-gray-700">{c.startValue?.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">종료값</p>
+                      <p className="text-sm font-semibold text-gray-700">{c.endValue?.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 데스크톱 테이블 레이아웃 */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -155,7 +188,7 @@ export default function DateComparisonPage() {
                 </thead>
                 <tbody>
                   {data.companies?.map((c: any, index: number) => (
-                    <tr key={`${c.code}-${index}`} className="border-t">
+                    <tr key={`${c.code}-${index}`} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-2">{c.name}</td>
                       <td className="px-4 py-2 text-center">{c.code}</td>
                       <td className="px-4 py-2 text-center font-medium text-blue-600">{c.year}</td>
