@@ -88,13 +88,16 @@ async function fetchLatestStockPrice(stockCode) {
         if (cells.length < 7) return null;
 
         const priceChangeText = $(cells[2]).text().trim();
-        const isUp = priceChangeText.includes('▲');
-        const isDown = priceChangeText.includes('▼');
+        const isUp = priceChangeText.includes('상승');
+        const isDown = priceChangeText.includes('하락');
+
+        // Extract numeric change amount from cells[2] (remove Korean text)
+        const changeAmount = cleanNumber(priceChangeText.replace('하락', '').replace('상승', ''));
 
         return {
             date: $(cells[0]).text().trim().replace(/\./g, '-'),
             close_price: $(cells[1]).text().trim(),
-            change_rate: isDown ? -cleanNumber($(cells[3]).text()) : cleanNumber($(cells[3]).text()),
+            change_rate: isDown ? -changeAmount : changeAmount,
             volume: $(cells[6]).text().trim()
         };
     } catch (error) {
