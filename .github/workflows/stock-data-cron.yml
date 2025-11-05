@@ -56,6 +56,29 @@ jobs:
           node fnguide-scraper.js
           echo "✅ FnGuide 재무 데이터 수집 완료!"
 
+      - name: Refresh Materialized Views (Financial Data)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          echo "🔄 Materialized View 갱신 중..."
+
+          # Supabase URL에서 호스트 추출 (https://xxx.supabase.co -> xxx.supabase.co)
+          DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+
+          # PostgreSQL 연결 문자열 생성
+          export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+
+          # psql이 없으면 설치
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+
+          # Materialized View REFRESH 실행
+          psql "postgresql://postgres:${SUPABASE_SERVICE_KEY}@db.${DB_HOST}:5432/postgres" \
+            -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+            -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+
+          echo "✅ Materialized View 갱신 완료!"
+
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -99,6 +122,29 @@ jobs:
           echo "🚀 네이버 주가 데이터 수집 시작..."
           node stock-price-scraper.js
           echo "✅ 네이버 주가 데이터 수집 완료!"
+
+      - name: Refresh Materialized Views (Stock Price Data)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          echo "🔄 Materialized View 갱신 중..."
+
+          # Supabase URL에서 호스트 추출
+          DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+
+          # PostgreSQL 연결 문자열 생성
+          export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+
+          # psql이 없으면 설치
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+
+          # Materialized View REFRESH 실행
+          psql "postgresql://postgres:${SUPABASE_SERVICE_KEY}@db.${DB_HOST}:5432/postgres" \
+            -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+            -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+
+          echo "✅ Materialized View 갱신 완료!"
 
       - name: Upload logs on failure
         if: failure()
