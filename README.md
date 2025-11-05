@@ -22,10 +22,11 @@ KOSPI/KOSDAQ 상위 1000개 기업의 **재무 컨센서스 변화** + **120일 
 ## 📋 기술 스택
 
 - **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Supabase (PostgreSQL) with Materialized Views
 - **Deployment**: Vercel
-- **Automation**: Vercel Cron Jobs (평일 오전 8시)
+- **Automation**: GitHub Actions (매일 오전 7시 & 오후 7시 KST)
 - **Data Sources**: Naver Finance, FnGuide
+- **Infrastructure**: Automated data pipeline with view refresh
 
 ## 🛠️ 설정 가이드
 
@@ -79,30 +80,37 @@ http://localhost:3000 접속
 
 ## 📅 자동 데이터 수집
 
-### Vercel Cron Jobs (프로덕션)
+### GitHub Actions (자동화)
 
-#### 1단계: 재무제표 수집
-- **스케줄**: 평일 오전 8시 (KST)
-- **엔드포인트**: `/api/collect-data`
-- **수집 데이터**: 매출액, 영업이익 (4개년 데이터)
-- **소요 시간**: 약 30-60분
+#### 워크플로우 1: 재무 데이터 수집
+- **스케줄**: 매일 오전 7:00 KST (UTC 22:00 전날)
+- **스크립트**: `scripts/fnguide-scraper.js`
+- **데이터 소스**: FnGuide
+- **수집 데이터**: 매출액, 영업이익 (2024-2027년 예상치)
+- **처리량**: 1,000개 기업 (KOSPI 500 + KOSDAQ 500)
+- **소요 시간**: 약 60분
+- **후처리**: Materialized View 자동 REFRESH
 
-#### 2단계: 주가 데이터 수집
-- **스케줄**: 평일 오후 8시 (KST)
-- **엔드포인트**: `/api/collect-stock-prices`
-- **수집 데이터**: 당일 종가, 변동률, 거래량 (장 마감 15:30 → 수집 20:00)
-- **소요 시간**: 약 30-60분
+#### 워크플로우 2: 주가 데이터 수집
+- **스케줄**: 매일 오후 7:00 KST (UTC 10:00)
+- **스크립트**: `scripts/stock-price-scraper.js`
+- **데이터 소스**: Naver Finance
+- **수집 데이터**: 당일 종가, 변동률, 거래량
+- **처리량**: 1,000개 기업
+- **소요 시간**: 약 16-17분
+- **후처리**: Materialized View 자동 REFRESH
 
-**보안**: 모든 엔드포인트는 `CRON_SECRET` 인증 필요
+**특징**:
+- ✅ 타임존 자동 변환 (UTC → KST)
+- ✅ 자동 재시도 & 에러 로깅
+- ✅ Materialized View 자동 갱신
+- ✅ 실패 시 Artifact 저장
 
-### 수동 테스트 (로컬/프로덕션)
-```bash
-# 재무제표 테스트 (5개 기업)
-curl http://localhost:3000/api/collect-data/manual
-
-# 주가 데이터 테스트 (5개 기업)
-curl http://localhost:3000/api/collect-stock-prices/manual
-```
+### 수동 실행
+GitHub Actions 탭에서 "Run workflow" 버튼으로 수동 실행 가능
+- **fnguide**: 재무 데이터만 수집
+- **stock-price**: 주가 데이터만 수집
+- **both**: 둘 다 수집
 
 ## 📊 데이터 구조
 
@@ -184,9 +192,12 @@ npm run migrate      # 기존 Excel 데이터 마이그레이션
 
 ## 📋 상세 문서
 
-- [배포 가이드](DEPLOYMENT_GUIDE.md)
-- [API 문서](DEPLOYMENT_GUIDE.md#-api-엔드포인트-상세)
-- [투자 점수 알고리즘](DEPLOYMENT_GUIDE.md#-투자-점수-알고리즘-상세)
+- [시스템 아키텍처](docs/ARCHITECTURE.md) - 전체 시스템 구조 및 데이터 흐름
+- [데이터베이스 스키마](docs/DATABASE.md) - DB 구조, Views, 인덱스 설명
+- [개발 가이드](docs/DEVELOPMENT.md) - 로컬 환경 설정 및 개발 워크플로우
+- [문제 해결 가이드](docs/TROUBLESHOOTING.md) - 일반적인 문제 및 해결 방법
+- [API 문서](docs/API.md) - REST API 엔드포인트 상세
+- [변경 이력](CHANGELOG.md) - 주요 업데이트 및 버그 수정 기록
 
 ## 📄 라이선스
 
