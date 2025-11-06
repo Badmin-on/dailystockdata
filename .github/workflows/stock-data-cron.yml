@@ -63,15 +63,17 @@ jobs:
         run: |
           echo "🔄 Materialized View 갱신 중..."
 
-          # Supabase REST API를 통한 SQL 실행
+          # Supabase REST API를 통한 SQL 실행 시도
           curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
             -H "apikey: ${SUPABASE_SERVICE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
             -H "Content-Type: application/json" \
-            || echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
+            && RPC_SUCCESS=true || RPC_SUCCESS=false
 
-          # RPC 실패 시 psql 대안 (IPv4 DNS 강제)
-          if [ $? -ne 0 ]; then
+          # RPC 실패 시 psql 대안으로 직접 연결
+          if [ "$RPC_SUCCESS" = "false" ]; then
+            echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
+
             # IPv4 주소 직접 조회
             DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
             IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
@@ -91,9 +93,11 @@ jobs:
             psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
               -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
-          fi
 
-          echo "✅ Materialized View 갱신 완료!"
+            echo "✅ psql을 통한 Materialized View 갱신 완료!"
+          else
+            echo "✅ REST API를 통한 Materialized View 갱신 완료!"
+          fi
 
       - name: Upload logs on failure
         if: failure()
@@ -146,15 +150,17 @@ jobs:
         run: |
           echo "🔄 Materialized View 갱신 중..."
 
-          # Supabase REST API를 통한 SQL 실행
+          # Supabase REST API를 통한 SQL 실행 시도
           curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
             -H "apikey: ${SUPABASE_SERVICE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
             -H "Content-Type: application/json" \
-            || echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
+            && RPC_SUCCESS=true || RPC_SUCCESS=false
 
-          # RPC 실패 시 psql 대안 (IPv4 DNS 강제)
-          if [ $? -ne 0 ]; then
+          # RPC 실패 시 psql 대안으로 직접 연결
+          if [ "$RPC_SUCCESS" = "false" ]; then
+            echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
+
             # IPv4 주소 직접 조회
             DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
             IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
@@ -174,9 +180,11 @@ jobs:
             psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
               -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
-          fi
 
-          echo "✅ Materialized View 갱신 완료!"
+            echo "✅ psql을 통한 Materialized View 갱신 완료!"
+          else
+            echo "✅ REST API를 통한 Materialized View 갱신 완료!"
+          fi
 
       - name: Upload logs on failure
         if: failure()
