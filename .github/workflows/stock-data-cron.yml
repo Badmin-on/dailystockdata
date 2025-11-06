@@ -63,19 +63,35 @@ jobs:
         run: |
           echo "🔄 Materialized View 갱신 중..."
 
-          # Supabase URL에서 호스트 추출 (https://xxx.supabase.co -> xxx.supabase.co)
-          DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+          # Supabase REST API를 통한 SQL 실행
+          curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            || echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
 
-          # PostgreSQL 연결 문자열 생성
-          export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+          # RPC 실패 시 psql 대안 (IPv4 DNS 강제)
+          if [ $? -ne 0 ]; then
+            # IPv4 주소 직접 조회
+            DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+            IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
 
-          # psql이 없으면 설치
-          sudo apt-get update && sudo apt-get install -y postgresql-client
+            if [ -z "$IPV4_ADDR" ]; then
+              echo "❌ IPv4 주소 조회 실패"
+              exit 1
+            fi
 
-          # Materialized View REFRESH 실행 (IPv4 강제, SSL 사용)
-          PGHOST="db.${DB_HOST}" PGPORT=5432 PGUSER=postgres PGDATABASE=postgres PGSSLMODE=require \
-          psql -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+            echo "✅ IPv4 주소: $IPV4_ADDR"
+
+            # psql 설치
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+            # IPv4 주소로 직접 연결
+            export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+            psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
+              -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+              -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+          fi
 
           echo "✅ Materialized View 갱신 완료!"
 
@@ -130,19 +146,35 @@ jobs:
         run: |
           echo "🔄 Materialized View 갱신 중..."
 
-          # Supabase URL에서 호스트 추출
-          DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+          # Supabase REST API를 통한 SQL 실행
+          curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            || echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
 
-          # PostgreSQL 연결 문자열 생성
-          export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+          # RPC 실패 시 psql 대안 (IPv4 DNS 강제)
+          if [ $? -ne 0 ]; then
+            # IPv4 주소 직접 조회
+            DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
+            IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
 
-          # psql이 없으면 설치
-          sudo apt-get update && sudo apt-get install -y postgresql-client
+            if [ -z "$IPV4_ADDR" ]; then
+              echo "❌ IPv4 주소 조회 실패"
+              exit 1
+            fi
 
-          # Materialized View REFRESH 실행 (IPv4 강제, SSL 사용)
-          PGHOST="db.${DB_HOST}" PGPORT=5432 PGUSER=postgres PGDATABASE=postgres PGSSLMODE=require \
-          psql -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+            echo "✅ IPv4 주소: $IPV4_ADDR"
+
+            # psql 설치
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+            # IPv4 주소로 직접 연결
+            export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
+            psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
+              -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+              -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+          fi
 
           echo "✅ Materialized View 갱신 완료!"
 
