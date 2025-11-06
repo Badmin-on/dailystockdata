@@ -72,10 +72,10 @@ jobs:
           # psql이 없으면 설치
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Materialized View REFRESH 실행
-          psql "postgresql://postgres:${SUPABASE_SERVICE_KEY}@db.${DB_HOST}:5432/postgres" \
-            -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-            -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+          # Materialized View REFRESH 실행 (IPv4 강제, SSL 사용)
+          PGHOST="db.${DB_HOST}" PGPORT=5432 PGUSER=postgres PGDATABASE=postgres PGSSLMODE=require \
+          psql -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
 
           echo "✅ Materialized View 갱신 완료!"
 
@@ -139,10 +139,10 @@ jobs:
           # psql이 없으면 설치
           sudo apt-get update && sudo apt-get install -y postgresql-client
 
-          # Materialized View REFRESH 실행
-          psql "postgresql://postgres:${SUPABASE_SERVICE_KEY}@db.${DB_HOST}:5432/postgres" \
-            -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-            -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
+          # Materialized View REFRESH 실행 (IPv4 강제, SSL 사용)
+          PGHOST="db.${DB_HOST}" PGPORT=5432 PGUSER=postgres PGDATABASE=postgres PGSSLMODE=require \
+          psql -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
+               -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
 
           echo "✅ Materialized View 갱신 완료!"
 
