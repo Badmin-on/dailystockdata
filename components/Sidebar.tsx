@@ -31,12 +31,12 @@ const menuItems: MenuItem[] = [
     path: '/dashboard',
     icon: HomeIcon
   },
-  {
-    name: '🎯 투자 기회 발굴',
-    path: '/investment-finder',
-    icon: ArrowTrendingUpIcon,
-    badge: 'HOT'
-  },
+  // {
+  //   name: '🎯 투자 기회 발굴',
+  //   path: '/investment-finder',
+  //   icon: ArrowTrendingUpIcon,
+  //   badge: 'HOT'
+  // },
   {
     name: '실시간 모니터링',
     path: '/monitor',
