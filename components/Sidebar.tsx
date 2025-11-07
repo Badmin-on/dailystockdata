@@ -69,11 +69,11 @@ const menuItems: MenuItem[] = [
     path: '/opportunities',
     icon: ArrowTrendingUpIcon
   },
-  {
-    name: '히스토리',
-    path: '/history',
-    icon: ClockIcon
-  },
+  // {
+  //   name: '히스토리',
+  //   path: '/history',
+  //   icon: ClockIcon
+  // },
   {
     name: '설정',
     path: '/settings',

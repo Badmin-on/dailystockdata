@@ -163,15 +163,14 @@ export default function SettingsPage() {
           <p className="text-slate-400">애플리케이션 설정 및 구성</p>
         </div>
 
-        {/* Manual Data Collection */}
-        <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-blue-500/30 rounded-xl p-8 mb-6">
+        {/* Manual Data Collection - Hidden (GitHub Actions handles auto collection) */}
+        {/* <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-sm border border-blue-500/30 rounded-xl p-8 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <ChartBarIcon className="h-6 w-6 text-blue-400" />
             <h2 className="text-2xl font-bold text-white">수동 데이터 수집</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* 재무 데이터 수집 */}
             <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-2">1. 재무 데이터 수집</h3>
               <p className="text-slate-400 text-sm mb-4">
@@ -207,7 +206,6 @@ export default function SettingsPage() {
                 )}
               </button>
 
-              {/* 진행률 표시 */}
               {financialCollecting && currentProgress && (
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-sm">
@@ -226,7 +224,6 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* 주가 데이터 수집 */}
             <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-2">2. 주가 데이터 수집</h3>
               <p className="text-slate-400 text-sm mb-4">
@@ -262,7 +259,6 @@ export default function SettingsPage() {
                 )}
               </button>
 
-              {/* 진행률 표시 */}
               {priceCollecting && currentProgress && (
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-sm">
@@ -282,7 +278,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* 수집 로그 */}
           {collectionLogs.length > 0 && (
             <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-700">
               <h3 className="text-sm font-semibold text-white mb-2">📋 수집 로그</h3>
@@ -296,17 +291,16 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* 안내 메시지 */}
           <div className="mt-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-blue-400 text-sm">
               ℹ️ <strong>주의사항:</strong> 수집 중에는 브라우저 탭을 닫지 마세요.
               재무 데이터 수집이 완료된 후 주가 데이터 수집을 진행할 수 있습니다.
             </p>
           </div>
-        </div>
+        </div> */}
 
-        {/* Data Collection Settings */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 mb-6">
+        {/* Data Collection Settings - Hidden (GitHub Actions handles auto collection) */}
+        {/* <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <ChartBarIcon className="h-6 w-6 text-blue-400" />
             <h2 className="text-2xl font-bold text-white">데이터 수집 설정</h2>
@@ -344,7 +338,7 @@ export default function SettingsPage() {
               <p className="text-slate-500 text-sm mt-2">최대 대기 시간</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Investment Score Thresholds */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-8 mb-6">
