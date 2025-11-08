@@ -3,19 +3,43 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    // 🔥 PostgreSQL Function 사용: DB에서 DISTINCT 처리 (60초 → 1~2초)
-    // 분석 결과: 고유 날짜 83개만 존재 (총 171,602 레코드)
-    // 전략: PostgreSQL get_unique_scrape_dates() 함수 호출
-    // 장점: 인덱스 활용, 메모리 효율적, 타임아웃 없음
+    // Supabase는 최대 1000개까지만 반환하므로 페이지네이션 필요
+    // 하지만 100개 날짜를 확보하려면 충분한 데이터가 필요
+    // 최적화: 고유 날짜 100개를 찾을 때까지만 조회
 
-    const { data, error } = await supabaseAdmin
-      .rpc('get_unique_scrape_dates', { limit_count: 100 });
+    let allDates: string[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    const targetUniqueDates = 100;
 
-    if (error) throw error;
+    while (allDates.length < targetUniqueDates && page < 200) {
+      const { data, error } = await supabaseAdmin
+        .from('financial_data')
+        .select('scrape_date')
+        .order('scrape_date', { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
 
-    console.log(`[available-dates] Found ${data?.length || 0} unique dates using PostgreSQL function`);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
 
-    return NextResponse.json(data || []);
+      // 중복 제거하면서 추가
+      const uniqueSet = new Set(allDates);
+      data.forEach(d => uniqueSet.add(d.scrape_date));
+      allDates = Array.from(uniqueSet);
+
+      console.log(`[available-dates] Page ${page + 1}: ${data.length} records, ${allDates.length} unique dates`);
+
+      // 목표 달성하면 종료
+      if (allDates.length >= targetUniqueDates) break;
+
+      page++;
+    }
+
+    console.log(`[available-dates] Total unique dates found: ${allDates.length}`);
+
+    // 내림차순 정렬 후 반환
+    const sortedDates = allDates.sort().reverse();
+    return NextResponse.json(sortedDates.slice(0, 100));
   } catch (error: any) {
     console.error('Error fetching dates:', error);
     return NextResponse.json(
