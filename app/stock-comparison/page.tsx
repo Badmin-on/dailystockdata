@@ -674,7 +674,7 @@ export default function StockComparisonPage() {
                     {formatNumber(item.current_price, 0)}{item.current_price ? '원' : ''}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-slate-400">
-                    {formatNumber(item.ma120, 2)}{item.ma120 ? '원' : ''}
+                    {formatNumber(item.ma120, 0)}{item.ma120 ? '원' : ''}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-center">
                     <span className={`px-3 py-1 rounded-full font-semibold ${getDeviationBgColor(item.price_deviation)} ${getDeviationColor(item.price_deviation)}`}>

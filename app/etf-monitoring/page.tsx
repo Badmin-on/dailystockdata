@@ -82,7 +82,7 @@ export default function ETFMonitoringPage() {
   // 포맷 헬퍼 함수
   const formatNumber = (value: number | null): string => {
     if (value === null || value === undefined) return '-';
-    return value.toLocaleString('ko-KR');
+    return value.toLocaleString('ko-KR', { maximumFractionDigits: 0 });
   };
 
   const formatPercent = (value: number | null): string => {

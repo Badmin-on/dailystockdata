@@ -107,7 +107,7 @@ export default function MonitorPage() {
 
   const formatPrice = (val: number | null) => {
     if (val == null) return 'N/A';
-    return val.toLocaleString() + '원';
+    return val.toLocaleString('ko-KR', { maximumFractionDigits: 0 }) + '원';
   };
 
   const formatPercent = (val: number | null) => {
