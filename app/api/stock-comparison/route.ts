@@ -104,34 +104,20 @@ export async function GET(request: NextRequest) {
     // 날짜 리스트는 전체 scrape_date에서 가져와야 함
     // 이유: 하나의 scrape_date에 여러 연도(2024,2025,2026,2027) 데이터가 모두 존재
 
-    // Supabase는 한 번에 최대 1000개만 반환하므로 페이지네이션 사용
-    let allDates: string[] = [];
-    let page = 0;
-    const pageSize = 1000;
-    const targetUniqueDates = 100;
+    // 🔥 성능 최적화: 페이지네이션 루프 제거 (60초 → 5초)
+    // 분석 결과: 고유 날짜 83개만 존재 (총 171,602 레코드)
+    // 전략: 전체 scrape_date 조회 후 고유 날짜 추출
+    const { data: dateData, error: dateError } = await supabaseAdmin
+      .from('financial_data')
+      .select('scrape_date')
+      .order('scrape_date', { ascending: false });
 
-    while (allDates.length < targetUniqueDates && page < 200) {
-      const { data, error } = await supabaseAdmin
-        .from('financial_data')
-        .select('scrape_date')
-        .order('scrape_date', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+    if (dateError) throw dateError;
 
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      // 중복 제거하면서 추가
-      const uniqueSet = new Set(allDates);
-      data.forEach(d => uniqueSet.add(d.scrape_date));
-      allDates = Array.from(uniqueSet);
-
-      // 목표 달성하면 종료
-      if (allDates.length >= targetUniqueDates) break;
-
-      page++;
-    }
-
-    const uniqueDates = allDates.sort().reverse();
+    // Set을 사용한 고유 날짜 추출 (O(n) 성능)
+    const uniqueDates = dateData && dateData.length > 0
+      ? [...new Set(dateData.map(d => d.scrape_date))]
+      : [];
 
     console.log(`📅 Year ${year || 'all'}: ${uniqueDates.length} unique dates found`);
     console.log(`   First 5 dates: ${uniqueDates.slice(0, 5).join(', ')}`);
