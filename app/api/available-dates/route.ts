@@ -3,28 +3,43 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    // 🔥 성능 최적화: 페이지네이션 루프 제거 (60초 → 5초)
-    // 분석 결과: 고유 날짜 83개만 존재 (총 171,602 레코드)
-    // 전략: 전체 scrape_date 조회 후 클라이언트에서 고유 날짜 추출
-    // 이유: limit()을 쓰면 첫 날짜만 여러 번 반환되어 실패했음
+    // Supabase는 최대 1000개까지만 반환하므로 페이지네이션 필요
+    // 하지만 100개 날짜를 확보하려면 충분한 데이터가 필요
+    // 최적화: 고유 날짜 100개를 찾을 때까지만 조회
 
-    const { data, error } = await supabaseAdmin
-      .from('financial_data')
-      .select('scrape_date')
-      .order('scrape_date', { ascending: false });
+    let allDates: string[] = [];
+    let page = 0;
+    const pageSize = 1000;
+    const targetUniqueDates = 100;
 
-    if (error) throw error;
-    if (!data || data.length === 0) {
-      return NextResponse.json([]);
+    while (allDates.length < targetUniqueDates && page < 200) {
+      const { data, error } = await supabaseAdmin
+        .from('financial_data')
+        .select('scrape_date')
+        .order('scrape_date', { ascending: false })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+
+      // 중복 제거하면서 추가
+      const uniqueSet = new Set(allDates);
+      data.forEach(d => uniqueSet.add(d.scrape_date));
+      allDates = Array.from(uniqueSet);
+
+      console.log(`[available-dates] Page ${page + 1}: ${data.length} records, ${allDates.length} unique dates`);
+
+      // 목표 달성하면 종료
+      if (allDates.length >= targetUniqueDates) break;
+
+      page++;
     }
 
-    // Set을 사용한 고유 날짜 추출 (O(n) 성능)
-    const uniqueDates = [...new Set(data.map(d => d.scrape_date))];
+    console.log(`[available-dates] Total unique dates found: ${allDates.length}`);
 
-    console.log(`[available-dates] Found ${uniqueDates.length} unique dates from ${data.length} records`);
-
-    // 이미 정렬되어 있으므로 상위 100개만 반환
-    return NextResponse.json(uniqueDates.slice(0, 100));
+    // 내림차순 정렬 후 반환
+    const sortedDates = allDates.sort().reverse();
+    return NextResponse.json(sortedDates.slice(0, 100));
   } catch (error: any) {
     console.error('Error fetching dates:', error);
     return NextResponse.json(
