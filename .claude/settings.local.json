@@ -15,7 +15,14 @@
       "Bash(curl:*)",
       "Bash(echo:*)",
       "Bash(python3:*)",
-      "Read(//c/Users/nebad/Pictures/Screenshots/**)"
+      "Read(//c/Users/nebad/Pictures/Screenshots/**)",
+      "Bash(npm install:*)",
+      "Bash(pkill:*)",
+      "Bash(psql:*)",
+      "Bash(gh run list:*)",
+      "Bash(find:*)",
+      "Bash(git revert:*)",
+      "Read(//c/Users/nebad/Downloads/**)"
     ],
     "deny": [],
     "ask": []

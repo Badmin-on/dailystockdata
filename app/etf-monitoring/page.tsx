@@ -38,25 +38,95 @@ interface ProviderSummary {
   } | null;
 }
 
+interface Sector {
+  id: number;
+  name: string;
+  description: string;
+  growth_outlook: string;
+  color_code: string;
+}
+
+interface SectorStats {
+  sector_id: number;
+  sector_name: string;
+  description: string;
+  growth_outlook: string;
+  color_code: string;
+  etf_count: number;
+  avg_current_price: number;
+  avg_ma_120: number;
+  avg_divergence: number;
+  avg_position_in_52w_range: number;
+  avg_growth_score: number;
+  sector_valuation: string;
+  sector_investment_score: number;
+}
+
+interface ETFDetail {
+  id: number;
+  code: string;
+  name: string;
+  sector_id: number | null;
+  sector_name: string | null;
+  sector_color: string | null;
+  growth_score: number;
+  investment_thesis: string | null;
+  current_price: number;
+  change_rate: number;
+  divergence_120: number;
+  position_in_52w_range: number;
+  week_52_high: number;
+  week_52_low: number;
+  valuation_signal: string;
+  position_signal: string;
+  investment_score: number;
+}
+
 export default function ETFMonitoringPage() {
   const [etfData, setEtfData] = useState<ETFData[]>([]);
   const [summaryData, setSummaryData] = useState<ProviderSummary[]>([]);
+  const [sectors, setSectors] = useState<Sector[]>([]);
+  const [sectorStats, setSectorStats] = useState<SectorStats[]>([]);
+  const [etfDetails, setEtfDetails] = useState<ETFDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState<string>('ALL');
-  const [selectedSector, setSelectedSector] = useState<string>('ALL');
+  const [selectedSectorId, setSelectedSectorId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('provider');
-  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
+  const [sortBy, setSortBy] = useState<string>('investment_score');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
+  const [viewMode, setViewMode] = useState<'list' | 'heatmap'>('heatmap');
 
   // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // ETF 목록 조회
+        // 섹터 목록 조회
+        const sectorsRes = await fetch('/api/etf-sectors');
+        const sectorsData = await sectorsRes.json();
+        setSectors(sectorsData);
+
+        // 섹터 통계 조회
+        const statsRes = await fetch('/api/etf-sectors/stats');
+        const statsData = await statsRes.json();
+        setSectorStats(statsData);
+
+        // ETF 상세 정보 조회
+        const detailsParams = new URLSearchParams();
+        if (selectedSectorId) {
+          detailsParams.append('sector_id', selectedSectorId.toString());
+        }
+        detailsParams.append('sort_by', sortBy);
+        detailsParams.append('order', sortOrder.toLowerCase());
+
+        const detailsRes = await fetch(`/api/etf-details?${detailsParams}`);
+        const detailsData = await detailsRes.json();
+        setEtfDetails(detailsData);
+
+        // 기존 ETF 목록 조회 (하위 호환성 유지)
         const etfParams = new URLSearchParams({
           provider: selectedProvider,
-          sector: selectedSector,
+          sector: 'ALL',
           search: searchTerm,
           sortBy,
           sortOrder
@@ -77,7 +147,7 @@ export default function ETFMonitoringPage() {
     };
 
     fetchData();
-  }, [selectedProvider, selectedSector, searchTerm, sortBy, sortOrder]);
+  }, [selectedProvider, selectedSectorId, searchTerm, sortBy, sortOrder]);
 
   // 포맷 헬퍼 함수
   const formatNumber = (value: number | null): string => {
@@ -118,9 +188,117 @@ export default function ETFMonitoringPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 헤더 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">ETF 섹터 모니터링</h1>
-          <p className="text-slate-400">국내 상장 ETF 실시간 주가 및 이격도 분석</p>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">ETF 섹터 모니터링</h1>
+              <p className="text-slate-400">섹터별 ETF 투자 기회 분석 및 모니터링</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode('heatmap')}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  viewMode === 'heatmap'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                섹터 히트맵
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  viewMode === 'list'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                목록 보기
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* 섹터 히트맵 뷰 */}
+        {viewMode === 'heatmap' && (
+          <div className="space-y-6 mb-8">
+            {sectorStats.map((stat) => (
+              <div
+                key={stat.sector_id}
+                className="bg-slate-800/50 backdrop-blur-sm rounded-lg p-6 border border-slate-700 cursor-pointer hover:border-blue-500 transition-colors"
+                style={{ borderLeftWidth: '4px', borderLeftColor: stat.color_code }}
+                onClick={() => {
+                  setSelectedSectorId(stat.sector_id);
+                  setViewMode('list');
+                }}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-2xl font-bold text-white">{stat.sector_name}</h3>
+                      <span
+                        className="px-3 py-1 rounded-full text-xs font-semibold text-white"
+                        style={{ backgroundColor: stat.color_code }}
+                      >
+                        {stat.growth_outlook}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-400 mb-3">{stat.description}</p>
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-sm">ETF 수:</span>
+                        <span className="text-white font-semibold">{stat.etf_count}개</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-sm">평가:</span>
+                        <span className={`font-semibold ${
+                          stat.sector_valuation === '매우 저평가' || stat.sector_valuation === '저평가' ? 'text-green-400' :
+                          stat.sector_valuation === '매우 고평가' || stat.sector_valuation === '고평가' ? 'text-red-400' :
+                          'text-slate-300'
+                        }`}>
+                          {stat.sector_valuation}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-4xl font-bold text-white mb-1">
+                      {stat.sector_investment_score}점
+                    </div>
+                    <div className="text-sm text-slate-400">투자 점수</div>
+                  </div>
+                </div>
+
+                {/* 섹터 통계 바 */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-slate-900/50 rounded-lg p-3">
+                    <div className="text-xs text-slate-400 mb-1">평균 현재가</div>
+                    <div className="text-lg font-bold text-white">
+                      {formatNumber(stat.avg_current_price)}원
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-lg p-3">
+                    <div className="text-xs text-slate-400 mb-1">평균 120선 괴리율</div>
+                    <div className={`text-lg font-bold ${getDeviationColor(stat.avg_divergence)}`}>
+                      {stat.avg_divergence?.toFixed(1) || '-'}%
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-lg p-3">
+                    <div className="text-xs text-slate-400 mb-1">52주 평균 위치</div>
+                    <div className="text-lg font-bold text-white">
+                      {stat.avg_position_in_52w_range?.toFixed(0) || '-'}%
+                    </div>
+                  </div>
+                  <div className="bg-slate-900/50 rounded-lg p-3">
+                    <div className="text-xs text-slate-400 mb-1">평균 성장 점수</div>
+                    <div className="text-lg font-bold text-white">
+                      {stat.avg_growth_score?.toFixed(0) || '-'}점
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 전체 통계 카드 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -216,23 +394,16 @@ export default function ETFMonitoringPage() {
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">섹터</label>
               <select
-                value={selectedSector}
-                onChange={(e) => setSelectedSector(e.target.value)}
+                value={selectedSectorId || 'ALL'}
+                onChange={(e) => setSelectedSectorId(e.target.value === 'ALL' ? null : parseInt(e.target.value))}
                 className="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="ALL">전체</option>
-                <option value="채권">채권</option>
-                <option value="국내지수">국내지수</option>
-                <option value="해외지수-미국">해외지수-미국</option>
-                <option value="반도체">반도체</option>
-                <option value="2차전지">2차전지</option>
-                <option value="바이오/헬스케어">바이오/헬스케어</option>
-                <option value="IT/소프트웨어">IT/소프트웨어</option>
-                <option value="금융">금융</option>
-                <option value="배당">배당</option>
-                <option value="원자재/상품">원자재/상품</option>
-                <option value="부동산/리츠">부동산/리츠</option>
-                <option value="기타">기타</option>
+                <option value="ALL">전체 섹터</option>
+                {sectors.map((sector) => (
+                  <option key={sector.id} value={sector.id}>
+                    {sector.name}
+                  </option>
+                ))}
               </select>
             </div>
 
