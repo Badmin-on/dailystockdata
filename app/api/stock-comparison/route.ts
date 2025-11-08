@@ -104,34 +104,15 @@ export async function GET(request: NextRequest) {
     // 날짜 리스트는 전체 scrape_date에서 가져와야 함
     // 이유: 하나의 scrape_date에 여러 연도(2024,2025,2026,2027) 데이터가 모두 존재
 
-    // Supabase는 한 번에 최대 1000개만 반환하므로 페이지네이션 사용
-    let allDates: string[] = [];
-    let page = 0;
-    const pageSize = 1000;
-    const targetUniqueDates = 100;
+    // 🔥 PostgreSQL Function 사용: DB에서 DISTINCT 처리 (60초 → 1~2초)
+    // 전략: PostgreSQL get_unique_scrape_dates() 함수 호출
+    // 장점: 인덱스 활용, 메모리 효율적, 타임아웃 없음
+    const { data: dateData, error: dateError } = await supabaseAdmin
+      .rpc('get_unique_scrape_dates', { limit_count: 100 });
 
-    while (allDates.length < targetUniqueDates && page < 200) {
-      const { data, error } = await supabaseAdmin
-        .from('financial_data')
-        .select('scrape_date')
-        .order('scrape_date', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+    if (dateError) throw dateError;
 
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      // 중복 제거하면서 추가
-      const uniqueSet = new Set(allDates);
-      data.forEach(d => uniqueSet.add(d.scrape_date));
-      allDates = Array.from(uniqueSet);
-
-      // 목표 달성하면 종료
-      if (allDates.length >= targetUniqueDates) break;
-
-      page++;
-    }
-
-    const uniqueDates = allDates.sort().reverse();
+    const uniqueDates = dateData || [];
 
     console.log(`📅 Year ${year || 'all'}: ${uniqueDates.length} unique dates found`);
     console.log(`   First 5 dates: ${uniqueDates.slice(0, 5).join(', ')}`);
