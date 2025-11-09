@@ -88,16 +88,26 @@ async function fetchLatestStockPrice(stockCode) {
         if (cells.length < 7) return null;
 
         const priceChangeText = $(cells[2]).text().trim();
-        const isUp = priceChangeText.includes('상승');
-        const isDown = priceChangeText.includes('하락');
 
-        // Extract numeric change amount from cells[2] (remove Korean text)
-        const changeAmount = cleanNumber(priceChangeText.replace('하락', '').replace('상승', ''));
+        // ETF와 일반 주식 구분 처리
+        let changeRate = null;
+
+        // 퍼센트(%) 기호가 있으면 퍼센트 값, 없으면 원화 금액
+        if (priceChangeText.includes('%')) {
+            // 일반 주식: "5.30%" 형태
+            const isDown = priceChangeText.includes('하락');
+            const changeAmount = cleanNumber(priceChangeText.replace('하락', '').replace('상승', '').replace('%', ''));
+            changeRate = isDown ? -changeAmount : changeAmount;
+        } else {
+            // ETF: "530원" 형태 → change_rate는 null로 두고 DB에서 계산
+            // (당일종가 - 전일종가) / 전일종가 * 100 공식 사용
+            changeRate = null;
+        }
 
         return {
             date: $(cells[0]).text().trim().replace(/\./g, '-'),
             close_price: $(cells[1]).text().trim(),
-            change_rate: isDown ? -changeAmount : changeAmount,
+            change_rate: changeRate,
             volume: $(cells[6]).text().trim()
         };
     } catch (error) {
