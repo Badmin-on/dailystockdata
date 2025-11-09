@@ -292,13 +292,13 @@ export default function OpportunitiesPage() {
           <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl p-4 lg:p-6 text-white shadow-lg">
             <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">S급 기회</div>
             <div className="text-2xl lg:text-3xl font-bold">
-              {data.filter(d => d.investment_grade === 'S급').length}개
+              {data.filter(d => d.investment_grade === 'S').length}개
             </div>
           </div>
           <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
             <div className="text-xs lg:text-sm font-semibold opacity-90 mb-2">A급 기회</div>
             <div className="text-2xl lg:text-3xl font-bold">
-              {data.filter(d => d.investment_grade === 'A급').length}개
+              {data.filter(d => d.investment_grade === 'A').length}개
             </div>
           </div>
           <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 lg:p-6 text-white shadow-lg">
