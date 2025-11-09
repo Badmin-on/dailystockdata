@@ -135,10 +135,15 @@ export default function OpportunitiesPage() {
 
   const getGradeColor = (grade: string) => {
     const colors: { [key: string]: string } = {
+      'S': 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white',
       'S급': 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white',
+      'A': 'bg-gradient-to-r from-blue-500 to-blue-700 text-white',
       'A급': 'bg-gradient-to-r from-blue-500 to-blue-700 text-white',
+      'B': 'bg-gradient-to-r from-green-500 to-green-700 text-white',
       'B급': 'bg-gradient-to-r from-green-500 to-green-700 text-white',
+      'C': 'bg-gradient-to-r from-gray-400 to-gray-600 text-white',
       'C급': 'bg-gradient-to-r from-gray-400 to-gray-600 text-white',
+      'D': 'bg-gradient-to-r from-red-400 to-red-600 text-white',
       'D급': 'bg-gradient-to-r from-red-400 to-red-600 text-white'
     };
     return colors[grade] || 'bg-gray-200 text-gray-800';

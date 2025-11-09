@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * 투자 기회 발굴 API
  * 컨센서스 변화율 + 120일 이평선 이격도 기반 투자 점수 제공
