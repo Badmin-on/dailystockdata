@@ -1,7 +1,8 @@
 -- ============================================
 -- change_rate 자동 계산 Function & Trigger 생성
 -- ============================================
--- 목적: ETF 데이터 삽입/수정 시 change_rate가 null이면 자동 계산
+-- 목적: 모든 종목 데이터 삽입/수정 시 change_rate가 null이면 자동 계산
+-- 대상: 일반 주식 + ETF (모든 종목)
 -- 계산식: (당일종가 - 전일종가) / 전일종가 * 100
 -- ============================================
 
@@ -45,11 +46,8 @@ CREATE TRIGGER auto_calculate_change_rate
     FOR EACH ROW
     EXECUTE FUNCTION calculate_change_rate();
 
--- Step 3: 기존 NULL 값들 업데이트 (Trigger 테스트)
-WITH etf_companies AS (
-  SELECT id FROM companies WHERE is_etf = TRUE
-),
-corrected_rates AS (
+-- Step 3: 기존 NULL 값들 업데이트 (Trigger 테스트) - 모든 종목
+WITH corrected_rates AS (
   SELECT
     dsp.id as price_id,
     ROUND(
@@ -58,7 +56,6 @@ corrected_rates AS (
       2
     ) as correct_change_rate
   FROM daily_stock_prices dsp
-  INNER JOIN etf_companies ec ON ec.id = dsp.company_id
   WHERE dsp.close_price IS NOT NULL
     AND dsp.change_rate IS NULL
 )
@@ -75,9 +72,7 @@ DECLARE
 BEGIN
     SELECT COUNT(*) INTO null_count
     FROM daily_stock_prices dsp
-    JOIN companies c ON c.id = dsp.company_id
-    WHERE c.is_etf = TRUE
-      AND dsp.change_rate IS NULL
+    WHERE dsp.change_rate IS NULL
       AND dsp.date >= CURRENT_DATE - INTERVAL '30 days';
 
     RAISE NOTICE '========================================';
@@ -85,14 +80,15 @@ BEGIN
     RAISE NOTICE '========================================';
     RAISE NOTICE '';
     RAISE NOTICE '📋 Trigger 동작:';
+    RAISE NOTICE '  - 대상: 모든 종목 (일반 주식 + ETF)';
     RAISE NOTICE '  - INSERT/UPDATE 시 change_rate가 NULL이면 자동 계산';
     RAISE NOTICE '  - 계산식: (당일종가 - 전일종가) / 전일종가 * 100';
     RAISE NOTICE '';
     RAISE NOTICE '📊 현재 상태:';
-    RAISE NOTICE '  - 최근 30일 ETF 중 NULL 레코드: % 건', null_count;
+    RAISE NOTICE '  - 최근 30일 중 NULL 레코드: % 건', null_count;
     RAISE NOTICE '';
     RAISE NOTICE '다음 단계:';
-    RAISE NOTICE '  1. Materialized View 갱신';
+    RAISE NOTICE '  1. Materialized View 갱신 (refresh-mv-stock-analysis.sql)';
     RAISE NOTICE '  2. 화면에서 정상 표시 확인';
     RAISE NOTICE '';
 END $$;
