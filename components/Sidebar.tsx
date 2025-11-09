@@ -15,7 +15,8 @@ import {
   CircleStackIcon,
   ClockIcon,
   ArrowPathIcon,
-  RectangleGroupIcon
+  RectangleGroupIcon,
+  FireIcon
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -63,6 +64,12 @@ const menuItems: MenuItem[] = [
     name: '날짜별 비교',
     path: '/date-comparison',
     icon: CalendarDaysIcon
+  },
+  {
+    name: 'Smart Money Flow',
+    path: '/smart-money-flow',
+    icon: FireIcon,
+    badge: 'NEW'
   },
   {
     name: '투자 기회 (구버전)',
