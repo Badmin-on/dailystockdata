@@ -55,49 +55,7 @@ jobs:
           echo "🚀 FnGuide 재무 데이터 수집 시작..."
           node fnguide-scraper.js
           echo "✅ FnGuide 재무 데이터 수집 완료!"
-
-      - name: Refresh Materialized Views (Financial Data)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: |
-          echo "🔄 Materialized View 갱신 중..."
-
-          # Supabase REST API를 통한 SQL 실행 시도
-          curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
-            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
-            -H "Content-Type: application/json" \
-            && RPC_SUCCESS=true || RPC_SUCCESS=false
-
-          # RPC 실패 시 psql 대안으로 직접 연결
-          if [ "$RPC_SUCCESS" = "false" ]; then
-            echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
-
-            # IPv4 주소 직접 조회
-            DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
-            IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
-
-            if [ -z "$IPV4_ADDR" ]; then
-              echo "❌ IPv4 주소 조회 실패"
-              exit 1
-            fi
-
-            echo "✅ IPv4 주소: $IPV4_ADDR"
-
-            # psql 설치
-            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-
-            # IPv4 주소로 직접 연결
-            export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
-            psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
-              -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-              -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
-
-            echo "✅ psql을 통한 Materialized View 갱신 완료!"
-          else
-            echo "✅ REST API를 통한 Materialized View 갱신 완료!"
-          fi
+          echo "ℹ️ mv_stock_analysis는 Regular View로 자동 갱신됩니다."
 
       - name: Upload logs on failure
         if: failure()
@@ -142,49 +100,7 @@ jobs:
           echo "🚀 네이버 주가 데이터 수집 시작..."
           node stock-price-scraper.js
           echo "✅ 네이버 주가 데이터 수집 완료!"
-
-      - name: Refresh Materialized Views (Stock Price Data)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: |
-          echo "🔄 Materialized View 갱신 중..."
-
-          # Supabase REST API를 통한 SQL 실행 시도
-          curl -X POST "${SUPABASE_URL}/rest/v1/rpc/refresh_materialized_views" \
-            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
-            -H "Content-Type: application/json" \
-            && RPC_SUCCESS=true || RPC_SUCCESS=false
-
-          # RPC 실패 시 psql 대안으로 직접 연결
-          if [ "$RPC_SUCCESS" = "false" ]; then
-            echo "⚠️ RPC 호출 실패, 직접 psql 연결 시도..."
-
-            # IPv4 주소 직접 조회
-            DB_HOST=$(echo $SUPABASE_URL | sed 's|https://||' | sed 's|http://||')
-            IPV4_ADDR=$(getent ahostsv4 "db.${DB_HOST}" | head -n1 | awk '{print $1}')
-
-            if [ -z "$IPV4_ADDR" ]; then
-              echo "❌ IPv4 주소 조회 실패"
-              exit 1
-            fi
-
-            echo "✅ IPv4 주소: $IPV4_ADDR"
-
-            # psql 설치
-            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-
-            # IPv4 주소로 직접 연결
-            export PGPASSWORD="${SUPABASE_SERVICE_KEY}"
-            psql "host=${IPV4_ADDR} port=5432 user=postgres dbname=postgres sslmode=require" \
-              -c "REFRESH MATERIALIZED VIEW mv_consensus_changes;" \
-              -c "REFRESH MATERIALIZED VIEW mv_stock_analysis;"
-
-            echo "✅ psql을 통한 Materialized View 갱신 완료!"
-          else
-            echo "✅ REST API를 통한 Materialized View 갱신 완료!"
-          fi
+          echo "ℹ️ mv_stock_analysis는 Regular View로 자동 갱신됩니다."
 
       - name: Upload logs on failure
         if: failure()
