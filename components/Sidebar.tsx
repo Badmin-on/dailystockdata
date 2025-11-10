@@ -16,7 +16,8 @@ import {
   ClockIcon,
   ArrowPathIcon,
   RectangleGroupIcon,
-  FireIcon
+  FireIcon,
+  ChartPieIcon
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -69,6 +70,12 @@ const menuItems: MenuItem[] = [
     name: 'Smart Money Flow',
     path: '/smart-money-flow',
     icon: FireIcon,
+    badge: 'NEW'
+  },
+  {
+    name: '컨센서스 추이',
+    path: '/consensus-trend',
+    icon: ChartPieIcon,
     badge: 'NEW'
   },
   {
