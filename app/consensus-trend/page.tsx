@@ -297,6 +297,7 @@ export default function ConsensusTrendPage() {
                       stroke={['#3B82F6', '#10B981', '#F59E0B'][index % 3]}
                       strokeWidth={2}
                       dot={false}
+                      connectNulls={true}
                       name={`${year}년 ${viewMode === 'revenue' ? '매출' : '영업이익'}`}
                     />
                   ))}
@@ -310,6 +311,7 @@ export default function ConsensusTrendPage() {
                     fillOpacity={0.2}
                     stroke="#8B5CF6"
                     strokeWidth={2}
+                    connectNulls={true}
                     name="주가"
                   />
                 </ComposedChart>
