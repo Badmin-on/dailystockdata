@@ -109,7 +109,7 @@ export default function ConsensusTrendPage() {
 
       // 주가 기준값
       const firstValidPrice = data.timeSeriesData.find(item => item.close_price != null);
-      if (firstValidPrice) {
+      if (firstValidPrice && firstValidPrice.close_price !== null) {
         baseValues['close_price'] = firstValidPrice.close_price;
       }
     }
