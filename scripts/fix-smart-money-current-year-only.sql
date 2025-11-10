@@ -5,14 +5,12 @@
 -- 변경: year = EXTRACT(YEAR FROM CURRENT_DATE) 필터 추가
 -- ============================================
 
--- Step 1: 현재 상태 확인
+-- Step 1: 현재 상태 확인 (year 컬럼 체크 제거)
 SELECT '📊 Step 1: 현재 데이터 확인' as step;
 
 SELECT
     COUNT(*) as "총_레코드",
-    COUNT(DISTINCT code) as "고유_회사",
-    MIN(year) as "최소_연도",
-    MAX(year) as "최대_연도"
+    COUNT(DISTINCT code) as "고유_회사"
 FROM v_smart_money_flow;
 
 -- Step 2: View 재생성 (당해년도만)
@@ -113,6 +111,7 @@ SELECT
   io.name,
   io.code,
   io.market,
+  io.year,  -- 당해년도 표시 (확인용)
   io.current_price,
   io.change_rate,
   io.ma_120,
