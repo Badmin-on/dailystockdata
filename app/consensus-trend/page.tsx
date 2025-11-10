@@ -149,41 +149,41 @@ export default function ConsensusTrendPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* 헤더 */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             컨센서스 & 주가 추이 분석
           </h1>
-          <p className="text-gray-400">기업의 컨센서스 변화와 주가 추이를 한눈에 확인하세요</p>
+          <p className="text-sm lg:text-base text-gray-400">기업의 컨센서스 변화와 주가 추이를 한눈에 확인하세요</p>
         </div>
 
         {/* 검색 영역 */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-8 border border-gray-700">
-          <div className="flex gap-4">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 lg:p-6 mb-6 lg:mb-8 border border-gray-700">
+          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="기업 이름 또는 코드를 입력하세요 (예: 삼성전자, 005930)"
-                className="w-full bg-gray-700/50 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-12"
+                placeholder="기업 이름 또는 코드 입력 (예: 삼성전자)"
+                className="w-full bg-gray-700/50 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-11 text-sm lg:text-base"
               />
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 px-6 lg:px-8 py-3 rounded-lg font-semibold transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed text-sm lg:text-base min-h-[44px]"
             >
               {loading ? '검색 중...' : '검색'}
             </button>
           </div>
 
           {error && (
-            <div className="mt-4 bg-red-500/20 border border-red-500 rounded-lg p-4 text-red-200">
+            <div className="mt-4 bg-red-500/20 border border-red-500 rounded-lg p-3 lg:p-4 text-red-200 text-sm lg:text-base">
               {error}
             </div>
           )}
@@ -191,64 +191,65 @@ export default function ConsensusTrendPage() {
 
         {/* 데이터 표시 영역 */}
         {data && (
-          <div className="space-y-8">
+          <div className="space-y-4 lg:space-y-8">
             {/* 기업 정보 */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold mb-1">{data.company.name}</h2>
-                  <p className="text-gray-400">
-                    {data.company.code} · {data.company.market}
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  {/* 매출/영업이익 선택 */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setViewMode('revenue')}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        viewMode === 'revenue'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
-                    >
-                      매출
-                    </button>
-                    <button
-                      onClick={() => setViewMode('profit')}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        viewMode === 'profit'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
-                    >
-                      영업이익
-                    </button>
-                  </div>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-gray-700">
+              {/* 기업 정보 - 항상 상단 */}
+              <div className="mb-4">
+                <h2 className="text-xl lg:text-2xl font-bold mb-1">{data.company.name}</h2>
+                <p className="text-sm lg:text-base text-gray-400">
+                  {data.company.code} · {data.company.market}
+                </p>
+              </div>
 
-                  {/* 절대값/증감률 선택 */}
-                  <div className="flex gap-2 border-l border-gray-600 pl-4">
-                    <button
-                      onClick={() => setChartMode('absolute')}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        chartMode === 'absolute'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
-                    >
-                      절대값
-                    </button>
-                    <button
-                      onClick={() => setChartMode('percentage')}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        chartMode === 'percentage'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                      }`}
-                    >
-                      증감률
-                    </button>
-                  </div>
+              {/* 컨트롤 버튼 - 모바일: 세로 배치, 데스크톱: 가로 배치 */}
+              <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+                {/* 매출/영업이익 선택 */}
+                <div className="flex gap-2 w-full lg:w-auto">
+                  <button
+                    onClick={() => setViewMode('revenue')}
+                    className={`flex-1 lg:flex-none px-4 py-3 lg:py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base ${
+                      viewMode === 'revenue'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600 active:bg-gray-600'
+                    }`}
+                  >
+                    매출
+                  </button>
+                  <button
+                    onClick={() => setViewMode('profit')}
+                    className={`flex-1 lg:flex-none px-4 py-3 lg:py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base ${
+                      viewMode === 'profit'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600 active:bg-gray-600'
+                    }`}
+                  >
+                    영업이익
+                  </button>
+                </div>
+
+                {/* 절대값/증감률 선택 */}
+                <div className="flex gap-2 w-full lg:w-auto lg:border-l lg:border-gray-600 lg:pl-4">
+                  <button
+                    onClick={() => setChartMode('absolute')}
+                    className={`flex-1 lg:flex-none px-4 py-3 lg:py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base ${
+                      chartMode === 'absolute'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600 active:bg-gray-600'
+                    }`}
+                  >
+                    절대값
+                  </button>
+                  <button
+                    onClick={() => setChartMode('percentage')}
+                    className={`flex-1 lg:flex-none px-4 py-3 lg:py-2 rounded-lg font-semibold transition-colors text-sm lg:text-base ${
+                      chartMode === 'percentage'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600 active:bg-gray-600'
+                    }`}
+                  >
+                    증감률
+                  </button>
                 </div>
               </div>
             </div>
@@ -317,11 +318,107 @@ export default function ConsensusTrendPage() {
             )}
 
             {/* 차트 영역 */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-              <h3 className="text-xl font-bold mb-6">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-gray-700">
+              <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6">
                 {viewMode === 'revenue' ? '매출' : '영업이익'} 컨센서스 & 주가 추이
               </h3>
-              <ResponsiveContainer width="100%" height={500}>
+              <ResponsiveContainer width="100%" height={300} className="lg:hidden">
+                <ComposedChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  />
+                  {/* 왼쪽 Y축 */}
+                  <YAxis
+                    yAxisId="left"
+                    stroke="#9CA3AF"
+                    tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                    width={35}
+                    label={{
+                      value: chartMode === 'percentage' ? '변화율 (%)' : '컨센서스',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fill: '#9CA3AF',
+                      fontSize: 11
+                    }}
+                  />
+                  {/* 오른쪽 Y축 */}
+                  {chartMode === 'absolute' ? (
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#9CA3AF"
+                      tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                      width={35}
+                      label={{ value: '주가', angle: 90, position: 'insideRight', fill: '#9CA3AF', fontSize: 11 }}
+                    />
+                  ) : (
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#9CA3AF"
+                      tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                      hide={true}
+                    />
+                  )}
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (value === null || value === undefined) return ['-', name];
+
+                      if (chartMode === 'percentage') {
+                        return [`${value.toFixed(2)}%`, name];
+                      } else {
+                        if (name === '주가') {
+                          return [`${value.toLocaleString()}원`, name];
+                        } else {
+                          return [`${value.toLocaleString()}억원`, name];
+                        }
+                      }
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+
+                  {/* 컨센서스 라인 (왼쪽 축) */}
+                  {data.metadata.years.map((year, index) => (
+                    <Line
+                      key={year}
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey={`${year}년`}
+                      stroke={['#3B82F6', '#10B981', '#F59E0B'][index % 3]}
+                      strokeWidth={1.5}
+                      dot={false}
+                      connectNulls={true}
+                      name={`${year}년 ${viewMode === 'revenue' ? '매출' : '영업이익'}`}
+                    />
+                  ))}
+
+                  {/* 주가 영역 (오른쪽 축) */}
+                  <Area
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="close_price"
+                    fill="#8B5CF6"
+                    fillOpacity={0.2}
+                    stroke="#8B5CF6"
+                    strokeWidth={1.5}
+                    connectNulls={true}
+                    name="주가"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+
+              {/* Desktop chart */}
+              <ResponsiveContainer width="100%" height={500} className="hidden lg:block">
                 <ComposedChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis
@@ -417,21 +514,23 @@ export default function ConsensusTrendPage() {
             </div>
 
             {/* 메타데이터 */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">데이터 포인트</p>
-                  <p className="text-2xl font-bold">{data.metadata.totalDataPoints}개</p>
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 lg:p-6 border border-gray-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="py-3 lg:py-0">
+                  <p className="text-xs lg:text-sm text-gray-400 mb-1">데이터 포인트</p>
+                  <p className="text-xl lg:text-2xl font-bold">{data.metadata.totalDataPoints}개</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">기간</p>
-                  <p className="text-2xl font-bold">
-                    {data.metadata.dateRange.start} ~ {data.metadata.dateRange.end}
+                <div className="py-3 lg:py-0 border-t md:border-t-0 md:border-l md:border-r border-gray-700">
+                  <p className="text-xs lg:text-sm text-gray-400 mb-1">기간</p>
+                  <p className="text-base lg:text-2xl font-bold">
+                    {data.metadata.dateRange.start}<br className="md:hidden" />
+                    <span className="hidden md:inline"> ~ </span>
+                    {data.metadata.dateRange.end}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">분석 년도</p>
-                  <p className="text-2xl font-bold">{data.metadata.years.join(', ')}</p>
+                <div className="py-3 lg:py-0 border-t md:border-t-0 border-gray-700">
+                  <p className="text-xs lg:text-sm text-gray-400 mb-1">분석 년도</p>
+                  <p className="text-xl lg:text-2xl font-bold">{data.metadata.years.join(', ')}</p>
                 </div>
               </div>
             </div>
