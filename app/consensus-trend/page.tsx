@@ -52,6 +52,7 @@ export default function ConsensusTrendPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'revenue' | 'profit'>('revenue');
+  const [chartMode, setChartMode] = useState<'absolute' | 'percentage'>('percentage'); // 기본값 증감률
 
   const handleSearch = async () => {
     if (!searchInput.trim()) {
@@ -90,23 +91,62 @@ export default function ConsensusTrendPage() {
   };
 
   // 차트 데이터 가공
-  const chartData = data?.timeSeriesData.map(item => {
-    const result: any = {
-      date: item.date.substring(5), // MM-DD 형식으로 단축
-      close_price: item.close_price,
-    };
+  const chartData = (() => {
+    if (!data?.timeSeriesData.length) return [];
 
-    // 선택한 viewMode에 따라 데이터 추가
-    data.metadata.years.forEach(year => {
-      if (viewMode === 'revenue') {
-        result[`${year}년`] = item[`revenue_${year}`] ? item[`revenue_${year}`] / 1000000 : null; // 억원 단위
-      } else {
-        result[`${year}년`] = item[`op_profit_${year}`] ? item[`op_profit_${year}`] / 1000000 : null;
+    // 기준값 계산 (첫 번째 유효한 데이터 포인트)
+    const baseValues: { [key: string]: number } = {};
+
+    if (chartMode === 'percentage') {
+      // 각 year별 첫 번째 유효값 찾기
+      data.metadata.years.forEach(year => {
+        const key = viewMode === 'revenue' ? `revenue_${year}` : `op_profit_${year}`;
+        const firstValid = data.timeSeriesData.find(item => item[key] != null);
+        if (firstValid) {
+          baseValues[`${year}년`] = firstValid[key];
+        }
+      });
+
+      // 주가 기준값
+      const firstValidPrice = data.timeSeriesData.find(item => item.close_price != null);
+      if (firstValidPrice) {
+        baseValues['close_price'] = firstValidPrice.close_price;
       }
-    });
+    }
 
-    return result;
-  }) || [];
+    return data.timeSeriesData.map(item => {
+      const result: any = {
+        date: item.date.substring(5), // MM-DD 형식으로 단축
+      };
+
+      // 주가 처리
+      if (chartMode === 'absolute') {
+        result.close_price = item.close_price;
+      } else if (chartMode === 'percentage' && baseValues['close_price']) {
+        result.close_price = item.close_price
+          ? ((item.close_price - baseValues['close_price']) / baseValues['close_price'] * 100)
+          : null;
+      }
+
+      // 선택한 viewMode에 따라 데이터 추가
+      data.metadata.years.forEach(year => {
+        const key = viewMode === 'revenue' ? `revenue_${year}` : `op_profit_${year}`;
+        const value = item[key];
+
+        if (chartMode === 'absolute') {
+          // 절대값 (억원 단위)
+          result[`${year}년`] = value ? value / 1000000 : null;
+        } else if (chartMode === 'percentage' && baseValues[`${year}년`]) {
+          // 증감률 (%)
+          result[`${year}년`] = value
+            ? ((value - baseValues[`${year}년`]) / baseValues[`${year}년`] * 100)
+            : null;
+        }
+      });
+
+      return result;
+    });
+  })();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-8">
@@ -161,27 +201,54 @@ export default function ConsensusTrendPage() {
                     {data.company.code} · {data.company.market}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setViewMode('revenue')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                      viewMode === 'revenue'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                    }`}
-                  >
-                    매출
-                  </button>
-                  <button
-                    onClick={() => setViewMode('profit')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                      viewMode === 'profit'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
-                    }`}
-                  >
-                    영업이익
-                  </button>
+                <div className="flex gap-4">
+                  {/* 매출/영업이익 선택 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setViewMode('revenue')}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        viewMode === 'revenue'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      매출
+                    </button>
+                    <button
+                      onClick={() => setViewMode('profit')}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        viewMode === 'profit'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      영업이익
+                    </button>
+                  </div>
+
+                  {/* 절대값/증감률 선택 */}
+                  <div className="flex gap-2 border-l border-gray-600 pl-4">
+                    <button
+                      onClick={() => setChartMode('absolute')}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        chartMode === 'absolute'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      절대값
+                    </button>
+                    <button
+                      onClick={() => setChartMode('percentage')}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        chartMode === 'percentage'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      증감률
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -262,27 +329,58 @@ export default function ConsensusTrendPage() {
                     stroke="#9CA3AF"
                     tick={{ fill: '#9CA3AF', fontSize: 12 }}
                   />
-                  {/* 왼쪽 Y축: 컨센서스 (억원) */}
+                  {/* 왼쪽 Y축 */}
                   <YAxis
                     yAxisId="left"
                     stroke="#9CA3AF"
                     tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                    label={{ value: '컨센서스 (억원)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                    label={{
+                      value: chartMode === 'percentage' ? '변화율 (%)' : '컨센서스 (억원)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fill: '#9CA3AF'
+                    }}
                   />
-                  {/* 오른쪽 Y축: 주가 (원) */}
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    stroke="#9CA3AF"
-                    tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                    label={{ value: '주가 (원)', angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
-                  />
+                  {/* 오른쪽 Y축 */}
+                  {chartMode === 'absolute' ? (
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#9CA3AF"
+                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                      label={{ value: '주가 (원)', angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+                    />
+                  ) : (
+                    // 증감률 모드에서는 단일 Y축 사용
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#9CA3AF"
+                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                      hide={true}
+                    />
+                  )}
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#1F2937',
                       border: '1px solid #374151',
                       borderRadius: '8px',
                       color: '#fff',
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (value === null || value === undefined) return ['-', name];
+
+                      if (chartMode === 'percentage') {
+                        // 증감률 모드: % 표시
+                        return [`${value.toFixed(2)}%`, name];
+                      } else {
+                        // 절대값 모드
+                        if (name === '주가') {
+                          return [`${value.toLocaleString()}원`, name];
+                        } else {
+                          return [`${value.toLocaleString()}억원`, name];
+                        }
+                      }
                     }}
                   />
                   <Legend />
