@@ -111,7 +111,6 @@ SELECT
   io.name,
   io.code,
   io.market,
-  io.year,  -- 당해년도 표시 (확인용)
   io.current_price,
   io.change_rate,
   io.ma_120,
@@ -227,7 +226,8 @@ SELECT
     ELSE 'C'
   END as grade,
 
-  lm.date as last_updated
+  lm.date as last_updated,
+  io.year  -- 당해년도 확인용 (맨 마지막 추가)
 
 FROM unique_opportunities io
 LEFT JOIN latest_metrics lm ON io.company_id = lm.company_id
