@@ -160,35 +160,6 @@ export async function GET(request: NextRequest) {
       console.log(`✅ Fallback method completed: ${allDates.length} dates`);
     }
 
-    const uniqueDates = allDates.sort().reverse();
-
-      // ============================================
-      let page = 0;
-      const pageSize = 1000;
-
-      while (allDates.length < targetUniqueDates && page < 200) {
-        const { data, error } = await supabaseAdmin
-          .from('''financial_data''')
-          .select('''scrape_date''')
-          .order('''scrape_date''', { ascending: false })
-          .range(page * pageSize, (page + 1) * pageSize - 1);
-
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-
-        // 중복 제거하면서 추가
-        const uniqueSet = new Set(allDates);
-        data.forEach(d => uniqueSet.add(d.scrape_date));
-        allDates = Array.from(uniqueSet);
-
-        // 목표 달성하면 종료
-        if (allDates.length >= targetUniqueDates) break;
-
-        page++;
-      }
-
-      console.log(`✅ Fallback method completed: ${allDates.length} dates`);
-    }
 
     const uniqueDates = allDates.sort().reverse();
 
