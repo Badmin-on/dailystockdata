@@ -104,31 +104,90 @@ export async function GET(request: NextRequest) {
     // 날짜 리스트는 전체 scrape_date에서 가져와야 함
     // 이유: 하나의 scrape_date에 여러 연도(2024,2025,2026,2027) 데이터가 모두 존재
 
-    // Supabase는 한 번에 최대 1000개만 반환하므로 페이지네이션 사용
+    // ============================================
+    // 성능 개선: Database Function 사용 (100+ 쿼리 → 1 쿼리)
+    // 롤백 방법: 이 try-catch 블록을 삭제하고 아래 주석 코드 복원
+    // Database Function 롤백: DROP FUNCTION IF EXISTS get_unique_scrape_dates(INT);
+    // ============================================
     let allDates: string[] = [];
-    let page = 0;
-    const pageSize = 1000;
     const targetUniqueDates = 100;
 
-    while (allDates.length < targetUniqueDates && page < 200) {
-      const { data, error } = await supabaseAdmin
-        .from('financial_data')
-        .select('scrape_date')
-        .order('scrape_date', { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
+    try {
+      console.log('🚀 Attempting fast method: get_unique_scrape_dates()');
+
+      const { data: uniqueDatesResult, error } = await supabaseAdmin
+        .rpc('get_unique_scrape_dates', { limit_count: targetUniqueDates });
 
       if (error) throw error;
-      if (!data || data.length === 0) break;
 
-      // 중복 제거하면서 추가
-      const uniqueSet = new Set(allDates);
-      data.forEach(d => uniqueSet.add(d.scrape_date));
-      allDates = Array.from(uniqueSet);
+      if (uniqueDatesResult && uniqueDatesResult.length > 0) {
+        allDates = uniqueDatesResult.map((d: any) => d.scrape_date);
+        console.log(`✅ Fast method succeeded: ${allDates.length} dates in 1 query`);
+      } else {
+        throw new Error('No dates returned from function');
+      }
+    } catch (err) {
+      console.warn('⚠️  Fast method failed, using fallback pagination:', err);
 
-      // 목표 달성하면 종료
-      if (allDates.length >= targetUniqueDates) break;
+      // ============================================
+      // 기존 방법 (Fallback) - 항상 작동 보장
+      // Supabase는 한 번에 최대 1000개만 반환하므로 페이지네이션 사용
+      // ============================================
+      let page = 0;
+      const pageSize = 1000;
 
-      page++;
+      while (allDates.length < targetUniqueDates && page < 200) {
+        const { data, error } = await supabaseAdmin
+          .from('financial_data')
+          .select('scrape_date')
+          .order('scrape_date', { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        // 중복 제거하면서 추가
+        const uniqueSet = new Set(allDates);
+        data.forEach(d => uniqueSet.add(d.scrape_date));
+        allDates = Array.from(uniqueSet);
+
+        // 목표 달성하면 종료
+        if (allDates.length >= targetUniqueDates) break;
+
+        page++;
+      }
+
+      console.log(`✅ Fallback method completed: ${allDates.length} dates`);
+    }
+
+    const uniqueDates = allDates.sort().reverse();
+
+      // ============================================
+      let page = 0;
+      const pageSize = 1000;
+
+      while (allDates.length < targetUniqueDates && page < 200) {
+        const { data, error } = await supabaseAdmin
+          .from('''financial_data''')
+          .select('''scrape_date''')
+          .order('''scrape_date''', { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        // 중복 제거하면서 추가
+        const uniqueSet = new Set(allDates);
+        data.forEach(d => uniqueSet.add(d.scrape_date));
+        allDates = Array.from(uniqueSet);
+
+        // 목표 달성하면 종료
+        if (allDates.length >= targetUniqueDates) break;
+
+        page++;
+      }
+
+      console.log(`✅ Fallback method completed: ${allDates.length} dates`);
     }
 
     const uniqueDates = allDates.sort().reverse();
