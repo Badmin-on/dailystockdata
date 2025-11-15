@@ -40,31 +40,66 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const findClosestDate = async (targetDate: Date, direction: 'before' | 'after' = 'before') => {
-      const targetStr = targetDate.toISOString().split('T')[0];
-      const ascending = direction === 'after';
+    // ============================================
+    // 성능 개선: Database Function 사용 (2 쿼리 → 1 쿼리)
+    // 롤백 방법: 이 try-catch 블록을 삭제하고 아래 주석 코드 복원
+    // Database Function 롤백: DROP FUNCTION IF EXISTS find_closest_date_range(TEXT, TEXT);
+    // ============================================
+    let actualStartDate: string | null = null;
+    let actualEndDate: string | null = null;
 
-      // TypeScript 타입 안전성을 위해 조건문 사용
-      let query = supabaseAdmin
-        .from('financial_data')
-        .select('scrape_date');
+    try {
+      console.log('🚀 Attempting fast method: find_closest_date_range()');
 
-      if (direction === 'before') {
-        query = query.lte('scrape_date', targetStr);
+      const { data: dateRange, error } = await supabaseAdmin
+        .rpc('find_closest_date_range', {
+          start_date: start.toISOString().split('T')[0],
+          end_date: end.toISOString().split('T')[0]
+        });
+
+      if (error) throw error;
+
+      if (dateRange && dateRange.length > 0) {
+        actualStartDate = dateRange[0].actual_start_date;
+        actualEndDate = dateRange[0].actual_end_date;
+        console.log(`✅ Fast method succeeded: ${actualStartDate} ~ ${actualEndDate}`);
       } else {
-        query = query.gte('scrape_date', targetStr);
+        throw new Error('No date range returned');
       }
+    } catch (err) {
+      console.warn('⚠️  Fast method failed, using fallback:', err);
 
-      const { data } = await query
-        .order('scrape_date', { ascending })
-        .limit(1)
-        .single();
+      // ============================================
+      // 기존 방법 (Fallback) - 항상 작동 보장
+      // ============================================
+      const findClosestDate = async (targetDate: Date, direction: 'before' | 'after' = 'before') => {
+        const targetStr = targetDate.toISOString().split('T')[0];
+        const ascending = direction === 'after';
 
-      return data?.scrape_date || null;
-    };
+        // TypeScript 타입 안전성을 위해 조건문 사용
+        let query = supabaseAdmin
+          .from('financial_data')
+          .select('scrape_date');
 
-    const actualStartDate = await findClosestDate(start, 'after');
-    const actualEndDate = await findClosestDate(end, 'before');
+        if (direction === 'before') {
+          query = query.lte('scrape_date', targetStr);
+        } else {
+          query = query.gte('scrape_date', targetStr);
+        }
+
+        const { data } = await query
+          .order('scrape_date', { ascending })
+          .limit(1)
+          .single();
+
+        return data?.scrape_date || null;
+      };
+
+      actualStartDate = await findClosestDate(start, 'after');
+      actualEndDate = await findClosestDate(end, 'before');
+
+      console.log(`✅ Fallback method completed`);
+    }
 
     if (!actualStartDate || !actualEndDate) {
       return NextResponse.json(
