@@ -121,13 +121,13 @@ BEGIN
         'Count: ' || COUNT(*)::TEXT
     FROM financial_data_extended;
 
-    -- Check 2: NULL 값 비율
+    -- Check 2: NULL 값 비율 (수정: FLOAT → NUMERIC)
     RETURN QUERY
     SELECT
         'NULL Revenue Rate'::TEXT,
-        CASE WHEN (COUNT(*) FILTER (WHERE revenue IS NULL)::FLOAT / NULLIF(COUNT(*), 0)) < 0.1
+        CASE WHEN (COUNT(*) FILTER (WHERE revenue IS NULL)::NUMERIC / NULLIF(COUNT(*), 0)) < 0.1
              THEN '✅ PASS' ELSE '⚠️ WARNING' END,
-        'NULL Rate: ' || ROUND((COUNT(*) FILTER (WHERE revenue IS NULL)::FLOAT / NULLIF(COUNT(*), 0)) * 100, 2)::TEXT || '%'
+        'NULL Rate: ' || ROUND((COUNT(*) FILTER (WHERE revenue IS NULL)::NUMERIC / NULLIF(COUNT(*), 0)) * 100, 2)::TEXT || '%'
     FROM financial_data_extended
     WHERE company_id IS NOT NULL;
 
