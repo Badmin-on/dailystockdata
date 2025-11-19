@@ -37,3 +37,12 @@ next-env.d.ts
 
 # 민감한 데이터
 /scripts/migrate-to-supabase.js
+
+# Scraping logs
+scrape-*.log
+*-output.log
+
+# Debug scripts (keep in local only)
+scripts/debug-*.js
+scripts/wait-for-completion.sh
+
