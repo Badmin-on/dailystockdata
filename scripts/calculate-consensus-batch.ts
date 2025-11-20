@@ -28,7 +28,14 @@ interface CompanyFinancialData {
 
 async function calculateConsensusBatch() {
   const startTime = Date.now();
-  const snapshotDate = new Date().toISOString().split('T')[0];
+
+  // Use Korea Standard Time (KST = UTC+9)
+  const now = new Date();
+  const kstOffset = 9 * 60; // 9 hours in minutes
+  const kstTime = new Date(now.getTime() + (kstOffset - now.getTimezoneOffset()) * 60000);
+  const snapshotDate = kstTime.toISOString().split('T')[0];
+
+  console.log(`📅 Snapshot Date (KST): ${snapshotDate}`);
 
   console.log('🚀 Consensus Calculation Batch Started');
   console.log(`📅 Snapshot Date: ${snapshotDate}`);

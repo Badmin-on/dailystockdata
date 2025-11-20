@@ -4,6 +4,8 @@ on:
   schedule:
     # 한국 시간 오전 7시 = UTC 22시 (전날)
     - cron: '0 22 * * *'
+    # 한국 시간 오전 8시 = UTC 23시 (전날)
+    - cron: '0 23 * * *'
     # 한국 시간 오후 7시 = UTC 10시
     - cron: '0 10 * * *'
 
@@ -16,19 +18,20 @@ on:
         type: choice
         options:
           - fnguide
+          - consensus
           - stock-price
-          - both
+          - all
 
 jobs:
   # Job 1: FnGuide 재무 데이터 수집 (오전 7시)
   fnguide-scraper:
     name: FnGuide Financial Data Collection
     runs-on: ubuntu-latest
-    # 조건: 오전 7시 스케줄(UTC 22:00) 또는 수동 실행(fnguide/both)
+    # 조건: 오전 7시 스케줄(UTC 22:00) 또는 수동 실행(fnguide/all)
     if: |
       github.event.schedule == '0 22 * * *' ||
       github.event.inputs.scraper_type == 'fnguide' ||
-      github.event.inputs.scraper_type == 'both'
+      github.event.inputs.scraper_type == 'all'
 
     steps:
       - name: Checkout repository
@@ -65,15 +68,59 @@ jobs:
           path: scripts/*.log
           retention-days: 7
 
-  # Job 2: 네이버 주가 데이터 수집 (오후 7시)
+  # Job 2: 컨센서스 지표 계산 (오전 8시 - FnGuide 이후)
+  consensus-calculator:
+    name: Consensus Metrics Calculation
+    runs-on: ubuntu-latest
+    needs: [fnguide-scraper]
+    # 조건: 오전 8시 스케줄(UTC 23:00) 또는 수동 실행(consensus/all)
+    # FnGuide scraper가 성공한 경우에만 실행
+    if: |
+      (github.event.schedule == '0 23 * * *' ||
+       github.event.inputs.scraper_type == 'consensus' ||
+       github.event.inputs.scraper_type == 'all') &&
+      (needs.fnguide-scraper.result == 'success' || needs.fnguide-scraper.result == 'skipped')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run consensus calculator
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        run: |
+          echo "🚀 컨센서스 지표 계산 시작..."
+          npx tsx scripts/calculate-consensus-batch.ts
+          echo "✅ 컨센서스 지표 계산 완료!"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-calculator-logs-${{ github.run_number }}
+          path: scripts/*.log
+          retention-days: 7
+
+  # Job 3: 네이버 주가 데이터 수집 (오후 7시)
   stock-price-scraper:
     name: Naver Stock Price Collection
     runs-on: ubuntu-latest
-    # 조건: 오후 7시 스케줄(UTC 10:00) 또는 수동 실행(stock-price/both)
+    # 조건: 오후 7시 스케줄(UTC 10:00) 또는 수동 실행(stock-price/all)
     if: |
       github.event.schedule == '0 10 * * *' ||
       github.event.inputs.scraper_type == 'stock-price' ||
-      github.event.inputs.scraper_type == 'both'
+      github.event.inputs.scraper_type == 'all'
 
     steps:
       - name: Checkout repository
@@ -110,22 +157,26 @@ jobs:
           path: scripts/*.log
           retention-days: 7
 
-  # Job 3: 실패 알림 (선택사항)
+  # Job 4: 실패 알림 (선택사항)
   notify-failure:
     name: Notify on Failure
     runs-on: ubuntu-latest
-    needs: [fnguide-scraper, stock-price-scraper]
+    needs: [fnguide-scraper, consensus-calculator, stock-price-scraper]
     if: failure()
 
     steps:
       - name: Send failure notification
         run: |
-          echo "❌ 주가 데이터 수집 실패!"
+          echo "❌ 데이터 수집/계산 실패!"
           echo "수동 실행이 필요합니다."
-          echo "실패한 Job: ${{ needs.fnguide-scraper.result }} / ${{ needs.stock-price-scraper.result }}"
+          echo "실패한 Job 상태:"
+          echo "  - FnGuide: ${{ needs.fnguide-scraper.result }}"
+          echo "  - Consensus: ${{ needs.consensus-calculator.result }}"
+          echo "  - Stock Price: ${{ needs.stock-price-scraper.result }}"
           echo ""
           echo "📋 다음 단계:"
           echo "1. Actions 탭에서 로그 확인"
           echo "2. 로컬에서 수동 실행:"
-          echo "   - node C:\\alexDB\\1_seoul_ys_fnguide_supabase.js"
-          echo "   - node C:\\alexDB\\3_ys_stock_supabase.js"
+          echo "   - cd scripts && node fnguide-scraper.js"
+          echo "   - npx tsx scripts/calculate-consensus-batch.ts"
+          echo "   - cd scripts && node stock-price-scraper.js"
