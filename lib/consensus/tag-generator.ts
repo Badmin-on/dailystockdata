@@ -197,64 +197,64 @@ export function createDiffLog(
 
   // Calculate diffs
   const fvb_diff_d1 =
-    d1?.fvb_score !== null && currentMetric.fvb_score !== null
-      ? currentMetric.fvb_score - d1.fvb_score
+    d1 && d1.fvb_score !== null && currentMetric.fvb_score !== null
+      ? currentMetric.fvb_score - d1!.fvb_score
       : null;
 
   const hgs_diff_d1 =
-    d1?.hgs_score !== null && currentMetric.hgs_score !== null
-      ? currentMetric.hgs_score - d1.hgs_score
+    d1 && d1.hgs_score !== null && currentMetric.hgs_score !== null
+      ? currentMetric.hgs_score - d1!.hgs_score
       : null;
 
   const rrs_diff_d1 =
-    d1?.rrs_score !== null && currentMetric.rrs_score !== null
-      ? currentMetric.rrs_score - d1.rrs_score
+    d1 && d1.rrs_score !== null && currentMetric.rrs_score !== null
+      ? currentMetric.rrs_score - d1!.rrs_score
       : null;
 
   const fvb_diff_w1 =
-    w1?.fvb_score !== null && currentMetric.fvb_score !== null
-      ? currentMetric.fvb_score - w1.fvb_score
+    w1 && w1.fvb_score !== null && currentMetric.fvb_score !== null
+      ? currentMetric.fvb_score - w1!.fvb_score
       : null;
 
   const hgs_diff_w1 =
-    w1?.hgs_score !== null && currentMetric.hgs_score !== null
-      ? currentMetric.hgs_score - w1.hgs_score
+    w1 && w1.hgs_score !== null && currentMetric.hgs_score !== null
+      ? currentMetric.hgs_score - w1!.hgs_score
       : null;
 
   const rrs_diff_w1 =
-    w1?.rrs_score !== null && currentMetric.rrs_score !== null
-      ? currentMetric.rrs_score - w1.rrs_score
+    w1 && w1.rrs_score !== null && currentMetric.rrs_score !== null
+      ? currentMetric.rrs_score - w1!.rrs_score
       : null;
 
   const fvb_diff_m1 =
-    m1?.fvb_score !== null && currentMetric.fvb_score !== null
-      ? currentMetric.fvb_score - m1.fvb_score
+    m1 && m1.fvb_score !== null && currentMetric.fvb_score !== null
+      ? currentMetric.fvb_score - m1!.fvb_score
       : null;
 
   const hgs_diff_m1 =
-    m1?.hgs_score !== null && currentMetric.hgs_score !== null
-      ? currentMetric.hgs_score - m1.hgs_score
+    m1 && m1.hgs_score !== null && currentMetric.hgs_score !== null
+      ? currentMetric.hgs_score - m1!.hgs_score
       : null;
 
   const rrs_diff_m1 =
-    m1?.rrs_score !== null && currentMetric.rrs_score !== null
-      ? currentMetric.rrs_score - m1.rrs_score
+    m1 && m1.rrs_score !== null && currentMetric.rrs_score !== null
+      ? currentMetric.rrs_score - m1!.rrs_score
       : null;
 
   // Quadrant shifts
   const quad_shift_d1 =
     d1 && d1.quad_position !== currentMetric.quad_position
-      ? `${d1.quad_position}->${currentMetric.quad_position}`
+      ? `${d1!.quad_position}->${currentMetric.quad_position}`
       : null;
 
   const quad_shift_w1 =
     w1 && w1.quad_position !== currentMetric.quad_position
-      ? `${w1.quad_position}->${currentMetric.quad_position}`
+      ? `${w1!.quad_position}->${currentMetric.quad_position}`
       : null;
 
   const quad_shift_m1 =
     m1 && m1.quad_position !== currentMetric.quad_position
-      ? `${m1.quad_position}->${currentMetric.quad_position}`
+      ? `${m1!.quad_position}->${currentMetric.quad_position}`
       : null;
 
   // Generate tags and trends
