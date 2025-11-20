@@ -151,13 +151,13 @@ async function testConsensusCalculator() {
         console.log(`  Coordinates: (${result.quad_x}, ${result.quad_y})`);
 
         // Generate tags (without diff data for this test)
-        const metricForTag = {
+        const metricForTag: ConsensusMetricDaily = {
           ...result,
           snapshot_date: '2024-11-19',
           ticker: code,
           company_id: stock.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          target_y1: 2024,
+          target_y2: 2025,
         };
 
         const tags = generateTags(metricForTag);
