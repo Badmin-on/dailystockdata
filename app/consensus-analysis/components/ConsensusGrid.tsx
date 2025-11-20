@@ -102,52 +102,115 @@ export default function ConsensusGrid({ data, loading, sortBy, sortOrder, onSort
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                종목명
-              </th>
-              <th
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => onSort('eps_growth_pct')}
-              >
-                EPS 성장률 <SortIcon field="eps_growth_pct" />
-              </th>
-              <th
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => onSort('per_growth_pct')}
-              >
-                PER 변화율 <SortIcon field="per_growth_pct" />
-              </th>
-              <th
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => onSort('fvb_score')}
-              >
-                FVB <SortIcon field="fvb_score" />
-              </th>
-              <th
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => onSort('hgs_score')}
-              >
-                HGS <SortIcon field="hgs_score" />
-              </th>
-              <th
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => onSort('rrs_score')}
-              >
-                RRS <SortIcon field="rrs_score" />
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                4분면
-              </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                상세보기
-              </th>
-            </tr>
-          </thead>
+    <div>
+      {/* 모바일 카드 뷰 (md 미만 화면) */}
+      <div className="md:hidden space-y-4">
+        {data.map((row) => (
+          <div
+            key={row.ticker}
+            className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => handleRowClick(row.ticker)}
+          >
+            {/* 헤더: 종목명 + 4분면 */}
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="font-bold text-lg text-gray-900">
+                  {row.company_name || row.ticker}
+                </div>
+                <div className="text-sm text-gray-500">{row.ticker}</div>
+              </div>
+              <span className={`px-2 py-1 rounded text-xs font-semibold ${getQuadBadgeColor(row.quad_position)}`}>
+                {getQuadLabel(row.quad_position)}
+              </span>
+            </div>
+
+            {/* 메트릭 그리드 */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <div className="text-xs text-gray-500">EPS 성장률</div>
+                <div className={`text-lg font-bold ${row.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {row.eps_growth_pct?.toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">PER 변화율</div>
+                <div className={`text-lg font-bold ${row.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {row.per_growth_pct?.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+
+            {/* 점수 표시 */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-200">
+              <div className="text-center">
+                <div className="text-xs text-gray-500">FVB</div>
+                <div className="text-sm font-semibold text-blue-600">{row.fvb_score?.toFixed(2)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">HGS</div>
+                <div className="text-sm font-semibold text-green-600">{row.hgs_score?.toFixed(1)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500">RRS</div>
+                <div className="text-sm font-semibold text-red-600">{row.rrs_score?.toFixed(1)}</div>
+              </div>
+            </div>
+
+            {/* 상세보기 화살표 */}
+            <div className="flex items-center justify-end mt-3 text-blue-600 text-sm font-medium">
+              상세보기 <ChevronRightIcon className="w-4 h-4 ml-1" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 데스크탑 테이블 뷰 (md 이상 화면) */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  종목명
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSort('eps_growth_pct')}
+                >
+                  EPS 성장률 <SortIcon field="eps_growth_pct" />
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSort('per_growth_pct')}
+                >
+                  PER 변화율 <SortIcon field="per_growth_pct" />
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSort('fvb_score')}
+                >
+                  FVB <SortIcon field="fvb_score" />
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSort('hgs_score')}
+                >
+                  HGS <SortIcon field="hgs_score" />
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => onSort('rrs_score')}
+                >
+                  RRS <SortIcon field="rrs_score" />
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  4분면
+                </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  상세보기
+                </th>
+              </tr>
+            </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((row) => (
               <tr
@@ -244,13 +307,13 @@ export default function ConsensusGrid({ data, loading, sortBy, sortOrder, onSort
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Footer with row count */}
-      <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-        <p className="text-sm text-gray-600">
-          총 <span className="font-semibold">{data.length}</span>개 종목
-        </p>
+        {/* Footer with row count */}
+        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            총 <span className="font-semibold">{data.length}</span>개 종목
+          </p>
+        </div>
       </div>
     </div>
   );
