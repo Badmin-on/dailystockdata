@@ -4,8 +4,8 @@ on:
   schedule:
     # 한국 시간 오전 7시 = UTC 22시 (전날)
     - cron: '0 22 * * *'
-    # 한국 시간 오전 8시 = UTC 23시 (전날)
-    - cron: '0 23 * * *'
+    # 한국 시간 오전 8시 30분 = UTC 23시 30분 (전날)
+    - cron: '30 23 * * *'
     # 한국 시간 오후 7시 = UTC 10시
     - cron: '0 10 * * *'
 
@@ -68,15 +68,15 @@ jobs:
           path: scripts/*.log
           retention-days: 7
 
-  # Job 2: 컨센서스 지표 계산 (오전 8시 - FnGuide 이후)
+  # Job 2: 컨센서스 지표 계산 (오전 8시 30분 - FnGuide 이후 30분 버퍼)
   consensus-calculator:
     name: Consensus Metrics Calculation
     runs-on: ubuntu-latest
     needs: [fnguide-scraper]
-    # 조건: 오전 8시 스케줄(UTC 23:00) 또는 수동 실행(consensus/all)
+    # 조건: 오전 8시 30분 스케줄(UTC 23:30) 또는 수동 실행(consensus/all)
     # FnGuide scraper가 성공한 경우에만 실행
     if: |
-      (github.event.schedule == '0 23 * * *' ||
+      (github.event.schedule == '30 23 * * *' ||
        github.event.inputs.scraper_type == 'consensus' ||
        github.event.inputs.scraper_type == 'all') &&
       (needs.fnguide-scraper.result == 'success' || needs.fnguide-scraper.result == 'skipped')
