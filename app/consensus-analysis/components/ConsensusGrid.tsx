@@ -307,6 +307,7 @@ export default function ConsensusGrid({ data, loading, sortBy, sortOrder, onSort
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Footer with row count */}
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
