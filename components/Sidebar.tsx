@@ -17,7 +17,8 @@ import {
   ArrowPathIcon,
   RectangleGroupIcon,
   FireIcon,
-  ChartPieIcon
+  ChartPieIcon,
+  ScaleIcon
 } from '@heroicons/react/24/outline';
 
 interface MenuItem {
@@ -77,6 +78,12 @@ const menuItems: MenuItem[] = [
     path: '/consensus-trend',
     icon: ChartPieIcon,
     badge: 'NEW'
+  },
+  {
+    name: '컨센서스 밸류에이션 분석',
+    path: '/consensus-analysis',
+    icon: ScaleIcon,
+    badge: 'HOT'
   },
   {
     name: '투자 기회 (구버전)',

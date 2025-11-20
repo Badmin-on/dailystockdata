@@ -59,3 +59,64 @@ export interface DailyStockPrice {
   volume: number | null;
   created_at?: string;
 }
+
+// 🆕 확장 재무 데이터 타입 (Naver Finance)
+export interface FinancialDataExtended {
+  id: number;
+  company_id: number;
+  year: number;
+  scrape_date: string;
+
+  // 손익계산서
+  revenue: number | null;
+  operating_profit: number | null;
+  net_income: number | null;
+
+  // 수익성 지표
+  operating_margin: number | null;
+  net_margin: number | null;
+  roe: number | null;
+
+  // 주당 지표
+  eps: number | null;
+  per: number | null;
+  bps: number | null;
+  pbr: number | null;
+
+  // 재무상태표
+  total_assets: number | null;
+  total_liabilities: number | null;
+  total_equity: number | null;
+  debt_ratio: number | null;
+
+  // 현금흐름
+  operating_cash_flow: number | null;
+  investing_cash_flow: number | null;
+  financing_cash_flow: number | null;
+  free_cash_flow: number | null;
+
+  // 메타데이터
+  is_estimate: boolean;
+  data_source: 'naver' | 'fnguide' | 'dart';
+  created_at?: string;
+  updated_at?: string;
+}
+
+// 🆕 Naver API 응답 타입
+export interface NaverFinanceResponse {
+  financeInfo: {
+    trTitleList: Array<{
+      title: string;
+      key: string;
+      isConsensus: 'Y' | 'N';
+    }>;
+    rowList: Array<{
+      title: string;
+      columns: {
+        [key: string]: {
+          value: string;
+        };
+      };
+    }>;
+  };
+}

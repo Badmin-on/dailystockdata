@@ -39,7 +39,10 @@
       "Bash(findstr:*)",
       "Bash(git -C \"C:/Users/nebad/Desktop/dailystockdata/dailystockdata\" status)",
       "Bash(git branch:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npx tsx:*)",
+      "Bash(grep:*)",
+      "Bash(.gitignore)"
     ],
     "deny": [],
     "ask": []
