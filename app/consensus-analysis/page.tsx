@@ -161,20 +161,22 @@ export default function ConsensusAnalysisPage() {
       {/* Header */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">컨센서스 밸류에이션 분석</h1>
-              <p className="mt-2 text-gray-600">
-                EPS 성장률과 PER 변화율을 비교하여 저평가 기회를 탐지합니다
-              </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-xl md:text-3xl font-bold text-gray-900 break-keep">컨센서스 밸류에이션 분석</h1>
+                <p className="mt-2 text-sm md:text-base text-gray-600 break-keep">
+                  EPS 성장률과 PER 변화율을 비교하여 저평가 기회를 탐지합니다
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 shrink-0"
+              >
+                <FunnelIcon className="w-4 h-4" />
+                필터
+              </button>
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <FunnelIcon className="w-5 h-5" />
-              필터
-            </button>
           </div>
         </div>
       </div>
