@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const minHgs = searchParams.get('min_hgs');
     const maxRrs = searchParams.get('max_rrs');
 
-    // Build query
+    // Build query - Step 1: Get metrics
     let query = supabaseAdmin
       .from('consensus_metric_daily')
       .select(`
@@ -41,13 +41,11 @@ export async function GET(request: NextRequest) {
         fvb_score,
         hgs_score,
         rrs_score,
+        snapshot_date,
+        target_y1,
+        target_y2,
         companies:company_id (
           name
-        ),
-        consensus_diff_log!inner (
-          signal_tags,
-          is_target_zone,
-          is_high_growth
         )
       `)
       .eq('calc_status', 'NORMAL')
@@ -96,20 +94,55 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (!data || data.length === 0) {
+      return NextResponse.json({
+        data: [],
+        stats: {
+          total: 0,
+          q1_count: 0,
+          q2_count: 0,
+          q3_count: 0,
+          q4_count: 0,
+          target_zone_count: 0,
+          high_growth_count: 0,
+        },
+        axis_ranges: { x_min: -10, x_max: 100, y_min: -50, y_max: 50 }
+      });
+    }
+
+    // Step 2: Fetch corresponding diff_log data
+    const { data: diffLogData } = await supabaseAdmin
+      .from('consensus_diff_log')
+      .select('snapshot_date, ticker, target_y1, target_y2, signal_tags, is_target_zone, is_high_growth')
+      .eq('snapshot_date', data[0].snapshot_date)
+      .in('ticker', data.map((row: any) => row.ticker));
+
+    // Create lookup map for diff_log data
+    const diffLogMap = new Map();
+    diffLogData?.forEach((diff: any) => {
+      const key = `${diff.snapshot_date}-${diff.ticker}-${diff.target_y1}-${diff.target_y2}`;
+      diffLogMap.set(key, diff);
+    });
+
     // Format data for scatter plot
-    const formattedData: QuadrantDataPoint[] = data?.map((row: any) => ({
-      ticker: row.ticker,
-      company_name: row.companies?.name || row.ticker,
-      quad_x: row.quad_x,
-      quad_y: row.quad_y,
-      quad_position: row.quad_position,
-      fvb_score: row.fvb_score,
-      hgs_score: row.hgs_score,
-      rrs_score: row.rrs_score,
-      signal_tags: row.consensus_diff_log?.signal_tags || [],
-      is_target_zone: row.consensus_diff_log?.is_target_zone || false,
-      is_high_growth: row.consensus_diff_log?.is_high_growth || false,
-    })) || [];
+    const formattedData: QuadrantDataPoint[] = data.map((row: any) => {
+      const key = `${row.snapshot_date}-${row.ticker}-${row.target_y1}-${row.target_y2}`;
+      const diffLog = diffLogMap.get(key);
+
+      return {
+        ticker: row.ticker,
+        company_name: row.companies?.name || row.ticker,
+        quad_x: row.quad_x,
+        quad_y: row.quad_y,
+        quad_position: row.quad_position,
+        fvb_score: row.fvb_score,
+        hgs_score: row.hgs_score,
+        rrs_score: row.rrs_score,
+        signal_tags: diffLog?.signal_tags || [],
+        is_target_zone: diffLog?.is_target_zone || false,
+        is_high_growth: diffLog?.is_high_growth || false,
+      };
+    });
 
     // Calculate quadrant statistics
     const stats = {
