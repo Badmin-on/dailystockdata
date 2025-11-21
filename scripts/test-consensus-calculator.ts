@@ -12,7 +12,7 @@ config({ path: resolve(__dirname, '../.env.local') });
 import { supabaseAdmin } from '../lib/supabase';
 import { calculateConsensusResult } from '../lib/consensus/calculator';
 import { generateTags, generateAlertFlags } from '../lib/consensus/tag-generator';
-import type { YearPair } from '../lib/types/consensus';
+import type { YearPair, ConsensusMetricDaily } from '../lib/types/consensus';
 
 interface TestStockData {
   id: number;
@@ -151,11 +151,13 @@ async function testConsensusCalculator() {
         console.log(`  Coordinates: (${result.quad_x}, ${result.quad_y})`);
 
         // Generate tags (without diff data for this test)
-        const metricForTag = {
+        const metricForTag: ConsensusMetricDaily = {
           ...result,
           snapshot_date: '2024-11-19',
           ticker: code,
           company_id: stock.id,
+          target_y1: 2024,
+          target_y2: 2025,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };

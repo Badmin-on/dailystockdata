@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(params.limit || '50'), 100);
     const offset = (page - 1) * limit;
 
-    // Build query
+    // Build query - Step 1: Get metrics with company info only
     let query = supabaseAdmin
       .from('consensus_metric_daily')
       .select(`
@@ -46,13 +46,6 @@ export async function GET(request: NextRequest) {
           id,
           name,
           code
-        ),
-        consensus_diff_log (
-          signal_tags,
-          is_target_zone,
-          is_turnaround,
-          is_high_growth,
-          is_healthy
         )
       `, { count: 'exact' });
 
@@ -120,11 +113,7 @@ export async function GET(request: NextRequest) {
       query = query.lte('rrs_score', parseFloat(params.max_rrs));
     }
 
-    // Tags filter (PostgreSQL array contains)
-    if (params.tags) {
-      const tags = Array.isArray(params.tags) ? params.tags : [params.tags];
-      query = query.overlaps('consensus_diff_log.signal_tags', tags);
-    }
+    // Note: Tags filter removed - will be applied after joining with diff_log
 
     // Sorting
     const sortBy = params.sort_by || 'hgs_score';
@@ -147,7 +136,7 @@ export async function GET(request: NextRequest) {
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
-    // Execute query
+    // Execute query - Step 1: Get metrics
     const { data, error, count } = await query;
 
     if (error) {
@@ -158,19 +147,49 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Format response
-    const formattedData = data?.map((row: any) => ({
-      ...row,
-      company_name: row.companies?.name,
-      company_code: row.companies?.code,
-      signal_tags: row.consensus_diff_log?.signal_tags || [],
-      is_target_zone: row.consensus_diff_log?.is_target_zone || false,
-      is_turnaround: row.consensus_diff_log?.is_turnaround || false,
-      is_high_growth: row.consensus_diff_log?.is_high_growth || false,
-      is_healthy: row.consensus_diff_log?.is_healthy || false,
-      companies: undefined,
-      consensus_diff_log: undefined,
-    })) || [];
+    if (!data || data.length === 0) {
+      return NextResponse.json({
+        data: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          pages: 0,
+        },
+      });
+    }
+
+    // Step 2: Fetch corresponding diff_log data
+    const { data: diffLogData } = await supabaseAdmin
+      .from('consensus_diff_log')
+      .select('snapshot_date, ticker, target_y1, target_y2, signal_tags, is_target_zone, is_turnaround, is_high_growth, is_healthy')
+      .eq('snapshot_date', data[0].snapshot_date)
+      .in('ticker', data.map((row: any) => row.ticker));
+
+    // Create lookup map for diff_log data
+    const diffLogMap = new Map();
+    diffLogData?.forEach((diff: any) => {
+      const key = `${diff.snapshot_date}-${diff.ticker}-${diff.target_y1}-${diff.target_y2}`;
+      diffLogMap.set(key, diff);
+    });
+
+    // Format response - merge metric and diff_log data
+    const formattedData = data.map((row: any) => {
+      const key = `${row.snapshot_date}-${row.ticker}-${row.target_y1}-${row.target_y2}`;
+      const diffLog = diffLogMap.get(key);
+
+      return {
+        ...row,
+        company_name: row.companies?.name,
+        company_code: row.companies?.code,
+        signal_tags: diffLog?.signal_tags || [],
+        is_target_zone: diffLog?.is_target_zone || false,
+        is_turnaround: diffLog?.is_turnaround || false,
+        is_high_growth: diffLog?.is_high_growth || false,
+        is_healthy: diffLog?.is_healthy || false,
+        companies: undefined,
+      };
+    });
 
     return NextResponse.json({
       data: formattedData,

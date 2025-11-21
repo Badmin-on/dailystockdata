@@ -211,102 +211,99 @@ export default function ConsensusGrid({ data, loading, sortBy, sortOrder, onSort
                 </th>
               </tr>
             </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((row) => (
-              <tr
-                key={row.ticker}
-                className="hover:bg-blue-50 transition-colors group"
-              >
-                {/* 종목명 */}
-                <td
-                  className="px-6 py-4 whitespace-nowrap cursor-pointer"
-                  onClick={() => handleRowClick(row.ticker)}
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.map((row) => (
+                <tr
+                  key={row.ticker}
+                  className="hover:bg-blue-50 transition-colors group"
                 >
-                  <div className="font-medium text-gray-900 group-hover:text-blue-600">
-                    {row.company_name || row.ticker}
-                  </div>
-                  <div className="text-sm text-gray-500">{row.ticker}</div>
-                </td>
-
-                {/* EPS 성장률 */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <span
-                    className={`font-semibold ${
-                      row.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {row.eps_growth_pct?.toFixed(1)}%
-                  </span>
-                </td>
-
-                {/* PER 변화율 */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <span
-                    className={`font-semibold ${
-                      row.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'
-                    }`}
-                  >
-                    {row.per_growth_pct?.toFixed(1)}%
-                  </span>
-                </td>
-
-                {/* FVB Score */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <div
-                      className="h-2 rounded"
-                      style={{
-                        width: `${Math.min(Math.abs(row.fvb_score) * 30, 60)}px`,
-                        backgroundColor: row.fvb_score > 0 ? '#10b981' : '#ef4444'
-                      }}
-                    />
-                    <span className="font-mono text-sm">{row.fvb_score?.toFixed(2)}</span>
-                  </div>
-                </td>
-
-                {/* HGS Score */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <span
-                    className={`font-mono text-sm ${
-                      row.hgs_score > 20 ? 'font-bold text-green-600' : 'text-gray-700'
-                    }`}
-                  >
-                    {row.hgs_score?.toFixed(1)}
-                  </span>
-                </td>
-
-                {/* RRS Score */}
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <span
-                    className={`font-mono text-sm ${
-                      row.rrs_score > 30 ? 'font-bold text-red-600' : 'text-gray-700'
-                    }`}
-                  >
-                    {row.rrs_score?.toFixed(1)}
-                  </span>
-                </td>
-
-                {/* 4분면 */}
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getQuadBadgeColor(row.quad_position)}`}>
-                    {getQuadLabel(row.quad_position)}
-                  </span>
-                </td>
-
-                {/* 상세보기 버튼 */}
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <button
+                  {/* 종목명 */}
+                  <td
+                    className="px-6 py-4 whitespace-nowrap cursor-pointer"
                     onClick={() => handleRowClick(row.ticker)}
-                    className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors group-hover:scale-105 transform"
                   >
-                    상세보기
-                    <ChevronRightIcon className="w-4 h-4 ml-1" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    <div className="font-medium text-gray-900 group-hover:text-blue-600">
+                      {row.company_name || row.ticker}
+                    </div>
+                    <div className="text-sm text-gray-500">{row.ticker}</div>
+                  </td>
+
+                  {/* EPS 성장률 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span
+                      className={`font-semibold ${row.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
+                    >
+                      {row.eps_growth_pct?.toFixed(1)}%
+                    </span>
+                  </td>
+
+                  {/* PER 변화율 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span
+                      className={`font-semibold ${row.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'
+                        }`}
+                    >
+                      {row.per_growth_pct?.toFixed(1)}%
+                    </span>
+                  </td>
+
+                  {/* FVB Score */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <div
+                        className="h-2 rounded"
+                        style={{
+                          width: `${Math.min(Math.abs(row.fvb_score) * 30, 60)}px`,
+                          backgroundColor: row.fvb_score > 0 ? '#10b981' : '#ef4444'
+                        }}
+                      />
+                      <span className="font-mono text-sm">{row.fvb_score?.toFixed(2)}</span>
+                    </div>
+                  </td>
+
+                  {/* HGS Score */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span
+                      className={`font-mono text-sm ${row.hgs_score > 20 ? 'font-bold text-green-600' : 'text-gray-700'
+                        }`}
+                    >
+                      {row.hgs_score?.toFixed(1)}
+                    </span>
+                  </td>
+
+                  {/* RRS Score */}
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span
+                      className={`font-mono text-sm ${row.rrs_score > 30 ? 'font-bold text-red-600' : 'text-gray-700'
+                        }`}
+                    >
+                      {row.rrs_score?.toFixed(1)}
+                    </span>
+                  </td>
+
+                  {/* 4분면 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className={`px-2 py-1 text-xs rounded-full ${getQuadBadgeColor(row.quad_position)}`}>
+                      {getQuadLabel(row.quad_position)}
+                    </span>
+                  </td>
+
+                  {/* 상세보기 버튼 */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleRowClick(row.ticker)}
+                      className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors group-hover:scale-105 transform"
+                    >
+                      상세보기
+                      <ChevronRightIcon className="w-4 h-4 ml-1" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Footer with row count */}
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">

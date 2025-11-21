@@ -42,7 +42,8 @@
       "Bash(cp:*)",
       "Bash(npx tsx:*)",
       "Bash(grep:*)",
-      "Bash(.gitignore)"
+      "Bash(.gitignore)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
