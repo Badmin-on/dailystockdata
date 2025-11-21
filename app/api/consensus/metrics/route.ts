@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           name,
           code
         ),
-        consensus_diff_log!inner (
+        consensus_diff_log (
           signal_tags,
           is_target_zone,
           is_turnaround,
