@@ -6,15 +6,7 @@ import ConsensusFilters from './components/ConsensusFilters';
 import ConsensusGrid from './components/ConsensusGrid';
 import QuadrantChart from './components/QuadrantChart';
 
-interface FilterState {
-  date: string;
-  quad: string[];
-  tags: string[];
-  minFvb: number;
-  minHgs: number;
-  sortBy: string;
-  sortOrder: 'asc' | 'desc';
-}
+import { FilterState } from './components/ConsensusFilters';
 
 interface QuadrantStats {
   q1_count: number;
@@ -24,6 +16,15 @@ interface QuadrantStats {
 }
 
 export default function ConsensusAnalysisPage() {
+  // Smart Default Logic
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-11
+  // If Oct(9) or later, default to Next Year Outlook (e.g. 2025 vs 2026)
+  // Otherwise, default to Current Year Growth (e.g. 2024 vs 2025)
+  const defaultY1 = currentMonth >= 9 ? currentYear : currentYear - 1;
+  const defaultY2 = currentMonth >= 9 ? currentYear + 1 : currentYear;
+
   const [filters, setFilters] = useState<FilterState>({
     date: '', // Will be set to latest available date from DB
     quad: [],
@@ -31,7 +32,9 @@ export default function ConsensusAnalysisPage() {
     minFvb: -999,
     minHgs: -999,
     sortBy: 'fvb_score',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
+    target_y1: defaultY1,
+    target_y2: defaultY2
   });
 
   const [metricData, setMetricData] = useState<any[]>([]);
@@ -74,7 +77,7 @@ export default function ConsensusAnalysisPage() {
     if (filters.date) {
       fetchData();
     }
-  }, [filters.date, filters.sortBy, filters.sortOrder]);
+  }, [filters.date, filters.sortBy, filters.sortOrder, filters.target_y1, filters.target_y2]);
 
   useEffect(() => {
     applyClientFilters();
@@ -87,13 +90,15 @@ export default function ConsensusAnalysisPage() {
       const params = new URLSearchParams({
         date: filters.date,
         sort_by: filters.sortBy,
-        sort_order: filters.sortOrder
+        sort_order: filters.sortOrder,
+        target_y1: filters.target_y1.toString(),
+        target_y2: filters.target_y2.toString()
       });
 
       // Fetch metrics and quadrant data in parallel
       const [metricsRes, quadRes] = await Promise.all([
         fetch(`/api/consensus/metrics?${params}`),
-        fetch(`/api/consensus/quadrant?date=${filters.date}`)
+        fetch(`/api/consensus/quadrant?date=${filters.date}&target_y1=${filters.target_y1}&target_y2=${filters.target_y2}`)
       ]);
 
       if (!metricsRes.ok || !quadRes.ok) {
