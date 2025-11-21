@@ -21,13 +21,25 @@ export async function GET(request: NextRequest) {
             NODE_ENV: process.env.NODE_ENV,
         };
 
-        // 3. Server Time
+        // 3. Check Data Integrity (Join Query)
+        const { data: joinData, error: joinError } = await supabaseAdmin
+            .from('consensus_metric_daily')
+            .select(`
+        ticker,
+        companies:company_id (
+          name
+        )
+      `)
+            .limit(1)
+            .single();
+
+        // 4. Server Time
         const now = new Date();
         const kstOffset = 9 * 60;
         const kstTime = new Date(now.getTime() + (kstOffset - now.getTimezoneOffset()) * 60000);
 
         return NextResponse.json({
-            status: dbError ? 'error' : 'ok',
+            status: dbError || joinError ? 'error' : 'ok',
             timestamp: now.toISOString(),
             kst_time: kstTime.toISOString(),
             env_check: envCheck,
@@ -36,6 +48,12 @@ export async function GET(request: NextRequest) {
                 latest_snapshot: latestData?.snapshot_date || null,
                 latest_created_at: latestData?.created_at || null,
                 error: dbError?.message || null
+            },
+            data_integrity: {
+                join_check: !joinError,
+                join_error: joinError?.message || null,
+                sample_ticker: joinData?.ticker || null,
+                sample_company: joinData?.companies?.name || null
             }
         });
     } catch (error: any) {
