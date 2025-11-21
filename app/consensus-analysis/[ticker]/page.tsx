@@ -217,15 +217,18 @@ export default function CompanyDetailPage() {
             <ArrowLeftIcon className="w-5 h-5" />
             돌아가기
           </button>
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
-              <p className="mt-1 text-gray-600">
-                {ticker}{company.market ? ` · ${company.market}` : ''}
-              </p>
-              <div className="mt-3 inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
-                <CalendarIcon className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{company.name}</h1>
+                <span className="text-gray-600 text-sm md:text-base">
+                  {ticker}{company.market ? ` · ${company.market}` : ''}
+                </span>
+              </div>
+
+              <div className="mt-3 inline-flex flex-wrap items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <CalendarIcon className="w-4 h-4 text-blue-600 shrink-0" />
+                <span className="text-sm font-medium text-blue-900 break-keep">
                   분석 기준일: {new Date(latestMetric.snapshot_date + 'T00:00:00+09:00').toLocaleDateString('ko-KR', {
                     year: 'numeric',
                     month: 'long',
@@ -234,13 +237,13 @@ export default function CompanyDetailPage() {
                     timeZone: 'Asia/Seoul'
                   })}
                 </span>
-                <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded shrink-0">
                   한국 시간
                 </span>
               </div>
             </div>
-            <div className={`px-4 py-2 rounded-lg ${getQuadrantColor(latestMetric.quad_position)}`}>
-              <div className="text-sm font-semibold">
+            <div className={`px-4 py-2 rounded-lg ${getQuadrantColor(latestMetric.quad_position)} self-start md:self-auto`}>
+              <div className="text-sm font-semibold whitespace-nowrap">
                 {getQuadrantLabel(latestMetric.quad_position)}
               </div>
             </div>
@@ -250,100 +253,80 @@ export default function CompanyDetailPage() {
 
       <div className="container mx-auto px-6 py-6">
         {/* Alerts */}
-        {alerts.length > 0 && (
-          <div className="mb-6 space-y-2">
-            {alerts.map((alert, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg ${
-                  alert.severity === 'danger'
-                    ? 'bg-red-100 text-red-800'
-                    : alert.severity === 'warning'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-blue-100 text-blue-800'
-                }`}
-              >
-                <p className="font-medium">{alert.message}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Metrics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* FVB Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">FVB Score</h3>
-            <div className="text-3xl font-bold text-blue-600">
+          <div className="bg-white rounded-lg shadow p-4 md:p-6">
+            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">FVB Score</h3>
+            <div className="text-2xl md:text-3xl font-bold text-blue-600">
               {latestMetric.fvb_score.toFixed(2)}
             </div>
             {diffLog?.fvb_diff_d1 !== null && diffLog?.fvb_diff_d1 !== undefined && (
-              <p className={`text-sm mt-2 ${diffLog.fvb_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.fvb_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 전일 대비: {diffLog.fvb_diff_d1 > 0 ? '+' : ''}{diffLog.fvb_diff_d1.toFixed(2)}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-1 md:mt-2">
               실적 vs 밸류에이션 균형
             </p>
           </div>
 
           {/* HGS Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">HGS Score</h3>
-            <div className="text-3xl font-bold text-green-600">
+          <div className="bg-white rounded-lg shadow p-4 md:p-6">
+            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">HGS Score</h3>
+            <div className="text-2xl md:text-3xl font-bold text-green-600">
               {latestMetric.hgs_score.toFixed(1)}
             </div>
             {diffLog?.hgs_diff_d1 !== null && diffLog?.hgs_diff_d1 !== undefined && (
-              <p className={`text-sm mt-2 ${diffLog.hgs_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.hgs_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 전일 대비: {diffLog.hgs_diff_d1 > 0 ? '+' : ''}{diffLog.hgs_diff_d1.toFixed(1)}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-1 md:mt-2">
               건전 성장 점수
             </p>
           </div>
 
           {/* RRS Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-600 mb-2">RRS Score</h3>
-            <div className="text-3xl font-bold text-red-600">
+          <div className="bg-white rounded-lg shadow p-4 md:p-6">
+            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">RRS Score</h3>
+            <div className="text-2xl md:text-3xl font-bold text-red-600">
               {latestMetric.rrs_score.toFixed(1)}
             </div>
             {diffLog?.rrs_diff_d1 !== null && diffLog?.rrs_diff_d1 !== undefined && (
-              <p className={`text-sm mt-2 ${diffLog.rrs_diff_d1 >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.rrs_diff_d1 >= 0 ? 'text-red-600' : 'text-green-600'}`}>
                 전일 대비: {diffLog.rrs_diff_d1 > 0 ? '+' : ''}{diffLog.rrs_diff_d1.toFixed(1)}
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-1 md:mt-2">
               리레이팅 위험 점수
             </p>
           </div>
         </div>
 
         {/* Financial Data */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <CalendarIcon className="w-6 h-6 text-gray-600" />
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
+          <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
             재무 데이터
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             <div>
-              <p className="text-sm text-gray-600">EPS {latestMetric.target_y1}년</p>
-              <p className="text-xl font-semibold mt-1">{latestMetric.eps_y1.toLocaleString()}원</p>
+              <p className="text-xs md:text-sm text-gray-600">EPS {latestMetric.target_y1}년</p>
+              <p className="text-lg md:text-xl font-semibold mt-1">{latestMetric.eps_y1.toLocaleString()}원</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">EPS {latestMetric.target_y2}년</p>
-              <p className="text-xl font-semibold mt-1">{latestMetric.eps_y2.toLocaleString()}원</p>
+              <p className="text-xs md:text-sm text-gray-600">EPS {latestMetric.target_y2}년</p>
+              <p className="text-lg md:text-xl font-semibold mt-1">{latestMetric.eps_y2.toLocaleString()}원</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">EPS 성장률</p>
-              <p className={`text-xl font-semibold mt-1 ${latestMetric.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className="text-xs md:text-sm text-gray-600">EPS 성장률</p>
+              <p className={`text-lg md:text-xl font-semibold mt-1 ${latestMetric.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {latestMetric.eps_growth_pct.toFixed(1)}%
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">PER 변화율</p>
-              <p className={`text-xl font-semibold mt-1 ${latestMetric.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <p className="text-xs md:text-sm text-gray-600">PER 변화율</p>
+              <p className={`text-lg md:text-xl font-semibold mt-1 ${latestMetric.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'}`}>
                 {latestMetric.per_growth_pct.toFixed(1)}%
               </p>
             </div>

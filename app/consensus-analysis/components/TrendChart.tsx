@@ -51,7 +51,9 @@ export default function TrendChart({ data, metric = 'all' }: TrendChartProps) {
           stroke="#6b7280"
           tickFormatter={(value) => {
             // Format date as MM-DD
+            if (!value) return '';
             const date = new Date(value);
+            if (isNaN(date.getTime())) return value;
             return `${date.getMonth() + 1}/${date.getDate()}`;
           }}
         />

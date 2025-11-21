@@ -155,16 +155,15 @@ export default function ConsensusComparison({ ticker, currentDate }: ConsensusCo
       </div>
 
       {/* Period Selection Buttons */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="grid grid-cols-2 md:flex gap-2">
         {periods.map((period) => (
           <button
             key={period.label}
             onClick={() => handlePeriodClick(period.days, period.label)}
-            className={`px-4 py-2 rounded-lg border-2 font-medium transition-all ${
-              selectedPeriod === period.label
+            className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${selectedPeriod === period.label
                 ? 'bg-blue-100 text-blue-800 border-blue-300'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
-            }`}
+              }`}
           >
             {period.label}
           </button>
