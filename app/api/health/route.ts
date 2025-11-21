@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
                 join_check: !joinError,
                 join_error: joinError?.message || null,
                 sample_ticker: joinData?.ticker || null,
-                sample_company: joinData?.companies?.name || null
+                sample_company: Array.isArray(joinData?.companies) ? (joinData.companies[0] as any)?.name : (joinData?.companies as any)?.name
             }
         });
     } catch (error: any) {
