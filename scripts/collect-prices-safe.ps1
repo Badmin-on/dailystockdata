@@ -131,6 +131,33 @@ Write-Host "3. View 갱신: Invoke-WebRequest -Method POST http://localhost:3000
 Write-Host "4. 모니터링 페이지: http://localhost:3000/monitor"
 Write-Host ""
 
+# ============================================
+# 추가 작업: 2026 전망 데이터 수집 및 계산
+# ============================================
+Write-Host "╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║        2026 전망 데이터 수집 및 계산 시작          ║" -ForegroundColor Cyan
+Write-Host "╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+
+# 1. FnGuide Scraper 실행
+Write-Log "🚀 FnGuide 데이터 수집 시작 (2026/2027 전망)..."
+try {
+    npx tsx scripts/scrape-all-fnguide.ts
+    Write-Log "✅ FnGuide 데이터 수집 완료"
+} catch {
+    Write-Log "❌ FnGuide 데이터 수집 실패: $_"
+}
+
+# 2. Consensus Calculator 실행
+Write-Log "🚀 컨센서스 지표 계산 시작 (Future-Proof)..."
+try {
+    npx tsx scripts/calculate-consensus-batch.ts
+    Write-Log "✅ 컨센서스 지표 계산 완료"
+} catch {
+    Write-Log "❌ 컨센서스 지표 계산 실패: $_"
+}
+
+Write-Host ""
+
 # 결과 반환
 if ($failedBatches -gt 0) {
     Write-Host "⚠️ 일부 배치 수집 실패. 로그를 확인하세요." -ForegroundColor Yellow

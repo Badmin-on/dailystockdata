@@ -1,230 +1,201 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  ChartBarIcon,
-  CircleStackIcon,
-  ClockIcon,
   ArrowTrendingUpIcon,
-  BanknotesIcon,
-  BuildingOfficeIcon
+  ArrowTrendingDownIcon,
+  FireIcon,
+  ExclamationTriangleIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 
-interface Stats {
-  total_companies: number;
-  companies_with_prices: number;
-  total_financial_records: number;
-  total_price_records: number;
-  latest_financial_date: string;
-  latest_price_date: string;
-  price_collection_rate: string;
-  financial_coverage: string;
+interface CompanyData {
+  id: number;
+  name: string;
+  code: string;
+  market: string;
+  year: number;
+  current_revenue: number;
+  current_op_profit: number;
+  current_price: number | null;
+  revenueGrowth1Year: number | null;
+  opProfitGrowth1Year: number | null;
+  isHighlighted: boolean;
+  hasDailySurge: boolean;
+  isDeclining: boolean;
+  hasDailyDrop: boolean;
 }
 
-interface MarketStats {
-  kospi: { total: number };
-  kosdaq: { total: number };
+interface DashboardData {
+  date: string;
+  growth: CompanyData[];
+  decline: CompanyData[];
+  total_companies: number;
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [markets, setMarkets] = useState<MarketStats | null>(null);
+  const router = useRouter();
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear() + 1); // Default to Next Year
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    fetchDashboardData();
+  }, [selectedYear]);
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/data-status');
-      const data = await response.json();
-      
-      if (data.success) {
-        setStats(data.overall);
-        setMarkets(data.markets);
-      }
+      const response = await fetch(`/api/dashboard/summary?year=${selectedYear}`);
+      const result = await response.json();
+      setData(result);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-slate-400">데이터를 불러오는 중...</p>
-        </div>
-      </div>
-    );
-  }
+  const formatCurrency = (val: number) => {
+    if (!val) return '-';
+    return new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 1 }).format(val);
+  };
 
-  const statCards = [
-    {
-      name: '전체 기업 수',
-      value: stats?.total_companies?.toLocaleString() || '0',
-      change: null,
-      icon: BuildingOfficeIcon,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'from-blue-500/10 to-blue-600/10',
-      borderColor: 'border-blue-500/20'
-    },
-    {
-      name: '재무 데이터',
-      value: stats?.total_financial_records?.toLocaleString() || '0',
-      change: stats?.financial_coverage || '0%',
-      icon: ChartBarIcon,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'from-green-500/10 to-green-600/10',
-      borderColor: 'border-green-500/20'
-    },
-    {
-      name: '주가 데이터',
-      value: stats?.total_price_records?.toLocaleString() || '0',
-      change: stats?.price_collection_rate || '0%',
-      icon: ArrowTrendingUpIcon,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'from-purple-500/10 to-purple-600/10',
-      borderColor: 'border-purple-500/20'
-    },
-    {
-      name: '주가 보유 기업',
-      value: stats?.companies_with_prices?.toLocaleString() || '0',
-      change: null,
-      icon: BanknotesIcon,
-      color: 'from-orange-500 to-orange-600',
-      bgColor: 'from-orange-500/10 to-orange-600/10',
-      borderColor: 'border-orange-500/20'
-    }
-  ];
+  const formatPercent = (val: number | null) => {
+    if (val === null) return '-';
+    if (val === 9999) return '흑자전환';
+    return `${val > 0 ? '+' : ''}${val.toFixed(1)}%`;
+  };
+
+  const CompanyList = ({ title, items, type }: { title: string, items: CompanyData[], type: 'growth' | 'decline' }) => (
+    <div className={`rounded-xl border ${type === 'growth' ? 'border-red-100 bg-red-50/30' : 'border-blue-100 bg-blue-50/30'} p-6`}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-xl font-bold flex items-center ${type === 'growth' ? 'text-red-700' : 'text-blue-700'}`}>
+          {type === 'growth' ? <FireIcon className="w-6 h-6 mr-2" /> : <ExclamationTriangleIcon className="w-6 h-6 mr-2" />}
+          {title}
+        </h2>
+        <span className="text-sm text-gray-500">{items.length}개 종목</span>
+      </div>
+
+      <div className="space-y-3">
+        {items.map((company) => (
+          <div
+            key={company.id}
+            onClick={() => router.push(`/consensus-analysis/${company.code}`)}
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer group"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {company.name}
+                  </span>
+                  <span className="text-xs text-gray-400">{company.code}</span>
+                </div>
+                <div className="flex gap-1 mt-1">
+                  {company.isHighlighted && <span className="text-[10px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-medium">유망</span>}
+                  {company.hasDailySurge && <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-medium">급등</span>}
+                  {company.isDeclining && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">둔화</span>}
+                  {company.hasDailyDrop && <span className="text-[10px] px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">급락</span>}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-gray-900">
+                  {company.current_price ? `${company.current_price.toLocaleString()}원` : '-'}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm mt-3 pt-3 border-t border-gray-50">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">매출액 (YoY)</p>
+                <div className="flex justify-between items-end">
+                  <span className="font-medium">{formatCurrency(company.current_revenue)}</span>
+                  <span className={`text-xs font-bold ${(company.revenueGrowth1Year || 0) > 0 ? 'text-red-500' : 'text-blue-500'
+                    }`}>
+                    {formatPercent(company.revenueGrowth1Year)}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">영업이익 (YoY)</p>
+                <div className="flex justify-between items-end">
+                  <span className="font-medium">{formatCurrency(company.current_op_profit)}</span>
+                  <span className={`text-xs font-bold ${(company.opProfitGrowth1Year || 0) > 0 ? 'text-red-500' : 'text-blue-500'
+                    }`}>
+                    {formatPercent(company.opProfitGrowth1Year)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            해당 조건의 종목이 없습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="p-8">
-      {/* 헤더 */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">대시보드</h1>
-        <p className="text-slate-400">YoonStock Pro 데이터 현황 및 통계</p>
-      </div>
-
-      {/* 통계 카드 그리드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={index}
-              className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${card.bgColor} border ${card.borderColor} backdrop-blur-sm`}
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg bg-gradient-to-br ${card.color}`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  {card.change && (
-                    <span className="text-xs font-semibold text-green-400 bg-green-500/20 px-2 py-1 rounded-full">
-                      {card.change}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-400 mb-1">{card.name}</p>
-                  <p className="text-2xl font-bold text-white">{card.value}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 시장별 통계 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700/50 p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-            <CircleStackIcon className="w-6 h-6 mr-2 text-blue-400" />
-            시장별 기업 수
-          </h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/30">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">KP</span>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">KOSPI</p>
-                  <p className="text-2xl font-bold text-white">{markets?.kospi.total?.toLocaleString() || '0'}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/30">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">KQ</span>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-400">KOSDAQ</p>
-                  <p className="text-2xl font-bold text-white">{markets?.kosdaq.total?.toLocaleString() || '0'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Market Intelligence</h1>
+          <p className="text-gray-500">
+            {data?.date ? `${new Date(data.date).toLocaleDateString()} 기준` : '데이터 로딩 중...'}
+            시장 핵심 종목 분석
+          </p>
         </div>
 
-        {/* 최근 업데이트 정보 */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700/50 p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-            <ClockIcon className="w-6 h-6 mr-2 text-green-400" />
-            최근 업데이트
-          </h2>
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/30">
-              <p className="text-sm text-slate-400 mb-1">재무 데이터</p>
-              <p className="text-lg font-semibold text-white">
-                {stats?.latest_financial_date ? new Date(stats.latest_financial_date).toLocaleDateString('ko-KR') : 'N/A'}
-              </p>
-            </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/30">
-              <p className="text-sm text-slate-400 mb-1">주가 데이터</p>
-              <p className="text-lg font-semibold text-white">
-                {stats?.latest_price_date ? new Date(stats.latest_price_date).toLocaleDateString('ko-KR') : 'N/A'}
-              </p>
-            </div>
-          </div>
+        {/* Year Filter */}
+        <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+          <CalendarIcon className="w-5 h-5 text-gray-400 ml-2" />
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700 py-2 pl-2 pr-8 cursor-pointer"
+          >
+            {(() => {
+              const current = new Date().getFullYear();
+              return (
+                <>
+                  <option value={current}>{current}년 실적</option>
+                  <option value={current + 1}>{current + 1}년 전망 (Next Year)</option>
+                  <option value={current + 2}>{current + 2}년 전망 (Future)</option>
+                </>
+              );
+            })()}
+          </select>
         </div>
       </div>
 
-      {/* 빠른 액세스 메뉴 */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl border border-slate-700/50 p-6">
-        <h2 className="text-xl font-bold text-white mb-4">빠른 액세스</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/monitor"
-            className="p-4 bg-gradient-to-br from-blue-600/10 to-blue-500/10 border border-blue-500/20 rounded-lg hover:border-blue-500/50 transition-all group"
-          >
-            <ChartBarIcon className="w-8 h-8 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-            <h3 className="font-semibold text-white mb-1">실시간 모니터링</h3>
-            <p className="text-sm text-slate-400">주가 및 재무 데이터 실시간 확인</p>
-          </a>
-          <a
-            href="/opportunities"
-            className="p-4 bg-gradient-to-br from-green-600/10 to-green-500/10 border border-green-500/20 rounded-lg hover:border-green-500/50 transition-all group"
-          >
-            <ArrowTrendingUpIcon className="w-8 h-8 text-green-400 mb-2 group-hover:scale-110 transition-transform" />
-            <h3 className="font-semibold text-white mb-1">투자 기회</h3>
-            <p className="text-sm text-slate-400">컨센서스 변화 및 괴리율 분석</p>
-          </a>
-          <a
-            href="/date-comparison"
-            className="p-4 bg-gradient-to-br from-purple-600/10 to-purple-500/10 border border-purple-500/20 rounded-lg hover:border-purple-500/50 transition-all group"
-          >
-            <ClockIcon className="w-8 h-8 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-            <h3 className="font-semibold text-white mb-1">날짜별 비교</h3>
-            <p className="text-sm text-slate-400">특정 기간 재무 데이터 비교</p>
-          </a>
+      {loading ? (
+        <div className="flex justify-center items-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Rising Stars */}
+          <CompanyList
+            title="Rising Stars (성장/급등)"
+            items={data?.growth || []}
+            type="growth"
+          />
+
+          {/* Falling Stars */}
+          <CompanyList
+            title="Falling Stars (둔화/급락)"
+            items={data?.decline || []}
+            type="decline"
+          />
+        </div>
+      )}
     </div>
   );
 }

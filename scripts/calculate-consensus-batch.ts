@@ -1,3 +1,4 @@
+
 /**
  * Consensus Calculation Batch Script
  *
@@ -10,9 +11,9 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 config({ path: resolve(__dirname, '../.env.local') });
 
-import { supabaseAdmin } from '../lib/supabase';
-import { calculateConsensusResult } from '../lib/consensus/calculator';
-import { generateTags, generateAlertFlags, determineTrend } from '../lib/consensus/tag-generator';
+// Import dependencies after env vars are loaded
+const { supabaseAdmin } = require('../lib/supabase');
+const { calculateConsensusResult } = require('../lib/consensus/calculator');
 import type { YearPair } from '../lib/types/consensus';
 
 interface CompanyFinancialData {
@@ -23,6 +24,8 @@ interface CompanyFinancialData {
     year: number;
     eps: number | null;
     per: number | null;
+    data_source: string;
+    scrape_date: string;
   }>;
 }
 
@@ -34,35 +37,66 @@ async function calculateConsensusBatch() {
   const kstOffset = 9 * 60; // 9 hours in minutes
   const kstTime = new Date(now.getTime() + (kstOffset - now.getTimezoneOffset()) * 60000);
   const snapshotDate = kstTime.toISOString().split('T')[0];
+  const currentYear = kstTime.getFullYear();
 
   console.log(`📅 Snapshot Date (KST): ${snapshotDate}`);
+  console.log(`📅 Current Year: ${currentYear}`);
+
+  // Determine target years to fetch dynamically
+  // We want to support:
+  // 1. Current Year Growth: (Current-1) vs Current
+  // 2. Next Year Outlook: Current vs (Current+1)
+  // This ensures that when year changes (e.g. 2025 -> 2026), the logic automatically shifts.
+  const yearsToFetch = [currentYear - 1, currentYear, currentYear + 1];
+  console.log(`🎯 Target Years: ${yearsToFetch.join(', ')}`);
 
   console.log('🚀 Consensus Calculation Batch Started');
-  console.log(`📅 Snapshot Date: ${snapshotDate}`);
   console.log('═'.repeat(80));
 
   // 1. Fetch all companies with financial data
   console.log('\n📊 Step 1: Fetching financial data...');
 
-  const { data: financialData, error: fetchError } = await supabaseAdmin
-    .from('financial_data_extended')
-    .select(`
-      company_id,
-      year,
-      eps,
-      per,
-      companies:company_id (
-        id,
-        name,
-        code
-      )
-    `)
-    .in('year', [2024, 2025]);
+  // Fetch in chunks to bypass 1000 row limit
+  let allFinancialData: any[] = [];
+  let from = 0;
+  const chunkSize = 1000;
 
-  if (fetchError || !financialData) {
-    console.error('❌ Failed to fetch financial data:', fetchError);
-    process.exit(1);
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from('financial_data_extended')
+      .select(`
+          company_id,
+          year,
+          eps,
+          per,
+          data_source,
+          scrape_date,
+          companies:company_id (
+            id,
+            name,
+            code
+          )
+        `)
+      .in('year', yearsToFetch)
+      .order('scrape_date', { ascending: true }) // Oldest first, so newer overwrites in map logic below? No, we handle prioritization manually.
+      .range(from, from + chunkSize - 1);
+
+    if (error) {
+      console.error('❌ Failed to fetch financial data:', error);
+      process.exit(1);
+    }
+
+    if (!data || data.length === 0) break;
+
+    allFinancialData = [...allFinancialData, ...data];
+    from += chunkSize;
+
+    console.log(`  Fetched ${data.length} records (Total: ${allFinancialData.length})`);
+
+    if (data.length < chunkSize) break;
   }
+
+  const financialData = allFinancialData;
 
   console.log(`✅ Fetched ${financialData.length} financial records`);
 
@@ -86,11 +120,45 @@ async function calculateConsensusBatch() {
       });
     }
 
-    companyMap.get(companyId)!.data.push({
+    const companyData = companyMap.get(companyId)!;
+
+    // We need to handle multiple records for the same year (e.g. fnguide vs naver_wise)
+    // We prioritize naver_wise.
+    // Logic: Check if we already have a record for this year.
+    // If yes, check source. If existing is fnguide and new is naver_wise, overwrite.
+    // If existing is naver_wise, keep it (unless new is also naver_wise and newer date).
+
+    const existingIndex = companyData.data.findIndex(d => d.year === row.year);
+
+    const newRecord = {
       year: row.year,
       eps: row.eps,
       per: row.per,
-    });
+      data_source: row.data_source,
+      scrape_date: row.scrape_date
+    };
+
+    if (existingIndex !== -1) {
+      const existingRecord = companyData.data[existingIndex];
+
+      let shouldOverwrite = false;
+
+      // Priority: naver_wise > fnguide
+      if (newRecord.data_source === 'naver_wise' && existingRecord.data_source !== 'naver_wise') {
+        shouldOverwrite = true;
+      } else if (newRecord.data_source === existingRecord.data_source) {
+        // Same source, pick newer scrape_date
+        if (newRecord.scrape_date > existingRecord.scrape_date) {
+          shouldOverwrite = true;
+        }
+      }
+
+      if (shouldOverwrite) {
+        companyData.data[existingIndex] = newRecord;
+      }
+    } else {
+      companyData.data.push(newRecord);
+    }
   });
 
   console.log(`✅ Grouped into ${companyMap.size} companies`);
@@ -99,166 +167,129 @@ async function calculateConsensusBatch() {
   console.log('\n📊 Step 3: Calculating consensus metrics...\n');
 
   const metricsToInsert: any[] = [];
-  const diffLogsToInsert: any[] = [];
 
   let successCount = 0;
   let errorCount = 0;
   let turnaroundCount = 0;
   let deficitCount = 0;
 
+  // Define pairs to calculate dynamically based on currentYear
+  const pairsToCalculate = [
+    { y1: currentYear - 1, y2: currentYear }, // Current Growth
+    { y1: currentYear, y2: currentYear + 1 }  // Next Outlook
+  ];
+
   for (const [companyId, company] of companyMap.entries()) {
-    // Find 2024 and 2025 data
-    const data2024 = company.data.find(d => d.year === 2024);
-    const data2025 = company.data.find(d => d.year === 2025);
+    for (const pairConfig of pairsToCalculate) {
+      const { y1, y2 } = pairConfig;
 
-    if (!data2024 || !data2025) continue;
-    if (!data2024.eps || !data2024.per || !data2025.eps || !data2025.per) continue;
+      // Find data for this pair
+      const dataY1 = company.data.find(d => d.year === y1);
+      const dataY2 = company.data.find(d => d.year === y2);
 
-    // Prepare year pair
-    const pair: YearPair = {
-      target_y1: 2024,
-      target_y2: 2025,
-      eps_y1: data2024.eps,
-      eps_y2: data2025.eps,
-      per_y1: data2024.per,
-      per_y2: data2025.per,
-    };
+      if (!dataY1 || !dataY2) continue;
 
-    // Calculate
-    const result = calculateConsensusResult(pair);
+      // EPS is mandatory, PER is optional
+      if (dataY1.eps === null || dataY2.eps === null) continue;
 
-    // Track status
-    if (result.calc_status === 'NORMAL') successCount++;
-    else if (result.calc_status === 'TURNAROUND') turnaroundCount++;
-    else if (result.calc_status === 'DEFICIT') deficitCount++;
-    else errorCount++;
+      let result: any;
 
-    // Prepare metric record
-    const metricRecord = {
-      snapshot_date: snapshotDate,
-      ticker: company.ticker,
-      company_id: company.company_id,
-      target_y1: 2024,
-      target_y2: 2025,
-      calc_status: result.calc_status,
-      calc_error: result.calc_error || null,
-      eps_y1: result.eps_y1,
-      eps_y2: result.eps_y2,
-      per_y1: result.per_y1,
-      per_y2: result.per_y2,
-      eps_growth_pct: result.eps_growth_pct,
-      per_growth_pct: result.per_growth_pct,
-      fvb_score: result.fvb_score,
-      hgs_score: result.hgs_score,
-      rrs_score: result.rrs_score,
-      quad_position: result.quad_position,
-      quad_x: result.quad_x,
-      quad_y: result.quad_y,
-    };
+      // Full calculation if PER is available
+      if (dataY1.per !== null && dataY2.per !== null) {
+        const pair: YearPair = {
+          target_y1: y1,
+          target_y2: y2,
+          eps_y1: dataY1.eps,
+          eps_y2: dataY2.eps,
+          per_y1: dataY1.per,
+          per_y2: dataY2.per,
+        };
+        result = calculateConsensusResult(pair);
+      } else {
+        // Partial calculation (EPS only)
+        const epsRatio = dataY2.eps / dataY1.eps;
+        const epsGrowth = (epsRatio - 1) * 100;
 
-    metricsToInsert.push(metricRecord);
+        // Determine status based on EPS sign logic
+        let status = 'NORMAL';
+        if (dataY1.eps < 0 && dataY2.eps > 0) status = 'TURNAROUND';
+        else if (dataY2.eps < 0) status = 'DEFICIT';
 
-    // Generate tags and flags (only for NORMAL and TURNAROUND)
-    if (result.calc_status === 'NORMAL' || result.calc_status === 'TURNAROUND') {
-      const tags = generateTags(metricRecord as any);
-      const flags = generateAlertFlags(metricRecord as any);
+        result = {
+          calc_status: status,
+          calc_error: null,
+          eps_y1: dataY1.eps,
+          eps_y2: dataY2.eps,
+          per_y1: dataY1.per,
+          per_y2: dataY2.per,
+          eps_growth_pct: parseFloat(epsGrowth.toFixed(2)),
+          per_growth_pct: null,
+          fvb_score: null,
+          hgs_score: null,
+          rrs_score: null,
+          quad_position: null,
+          quad_x: null,
+          quad_y: null,
+        };
+      }
 
-      const diffLog = {
-        snapshot_date: snapshotDate,
-        ticker: company.ticker,
+      // Track status
+      if (result.calc_status === 'NORMAL') successCount++;
+      else if (result.calc_status === 'TURNAROUND') turnaroundCount++;
+      else if (result.calc_status === 'DEFICIT') deficitCount++;
+      else errorCount++;
+
+      metricsToInsert.push({
         company_id: company.company_id,
-        target_y1: 2024,
-        target_y2: 2025,
-        // No historical data for first run, so diffs are null
-        fvb_diff_d1: null,
-        hgs_diff_d1: null,
-        rrs_diff_d1: null,
-        quad_shift_d1: null,
-        fvb_diff_w1: null,
-        hgs_diff_w1: null,
-        rrs_diff_w1: null,
-        quad_shift_w1: null,
-        fvb_diff_m1: null,
-        hgs_diff_m1: null,
-        rrs_diff_m1: null,
-        quad_shift_m1: null,
-        signal_tags: tags,
-        tag_count: tags.length,
-        fvb_trend: null,
-        hgs_trend: null,
-        rrs_trend: null,
-        ...flags,
-      };
-
-      diffLogsToInsert.push(diffLog);
+        ticker: company.ticker,
+        snapshot_date: snapshotDate,
+        target_y1: y1,
+        target_y2: y2,
+        eps_y1: result.eps_y1,
+        eps_y2: result.eps_y2,
+        per_y1: result.per_y1,
+        per_y2: result.per_y2,
+        eps_growth_pct: result.eps_growth_pct,
+        per_growth_pct: result.per_growth_pct,
+        fvb_score: result.fvb_score,
+        hgs_score: result.hgs_score,
+        rrs_score: result.rrs_score,
+        quad_position: result.quad_position,
+        quad_x: result.quad_x,
+        quad_y: result.quad_y,
+        calc_status: result.calc_status,
+        calc_error: result.calc_error,
+      });
     }
   }
 
-  console.log('\n' + '─'.repeat(80));
-  console.log('📈 Calculation Summary:');
-  console.log(`  Total Processed: ${companyMap.size}`);
-  console.log(`  ✅ NORMAL: ${successCount}`);
-  console.log(`  🔄 TURNAROUND: ${turnaroundCount}`);
-  console.log(`  ⚠️  DEFICIT: ${deficitCount}`);
-  console.log(`  ❌ ERROR: ${errorCount}`);
-  console.log('─'.repeat(80));
+  // 4. Batch Insert
+  console.log(`\n💾 Saving ${metricsToInsert.length} metrics to DB...`);
 
-  // 4. Save to database
-  console.log('\n📊 Step 4: Saving to database...\n');
+  if (metricsToInsert.length > 0) {
+    // Insert in chunks of 1000
+    for (let i = 0; i < metricsToInsert.length; i += 1000) {
+      const chunk = metricsToInsert.slice(i, i + 1000);
+      const { error } = await supabaseAdmin
+        .from('consensus_metrics')
+        .upsert(chunk, { onConflict: 'company_id,snapshot_date,target_y2' });
 
-  // Insert metrics
-  console.log(`💾 Inserting ${metricsToInsert.length} metric records...`);
-
-  const { error: metricsError } = await supabaseAdmin
-    .from('consensus_metric_daily')
-    .upsert(metricsToInsert, {
-      onConflict: 'snapshot_date,ticker,target_y1,target_y2',
-    });
-
-  if (metricsError) {
-    console.error('❌ Failed to insert metrics:', metricsError);
-    process.exit(1);
+      if (error) {
+        console.error('❌ Error saving batch:', error);
+      } else {
+        console.log(`  ✅ Saved batch ${i / 1000 + 1} (${chunk.length} records)`);
+      }
+    }
   }
 
-  console.log('✅ Metrics saved successfully');
+  console.log('\n📊 Summary:');
+  console.log(`  ✅ Success (Normal): ${successCount}`);
+  console.log(`  🔄 Turnaround: ${turnaroundCount}`);
+  console.log(`  📉 Deficit: ${deficitCount}`);
+  console.log(`  ❌ Error/Skipped: ${errorCount}`);
 
-  // Insert diff logs
-  console.log(`💾 Inserting ${diffLogsToInsert.length} diff log records...`);
-
-  const { error: diffError } = await supabaseAdmin
-    .from('consensus_diff_log')
-    .upsert(diffLogsToInsert, {
-      onConflict: 'snapshot_date,ticker,target_y1,target_y2',
-    });
-
-  if (diffError) {
-    console.error('❌ Failed to insert diff logs:', diffError);
-    process.exit(1);
-  }
-
-  console.log('✅ Diff logs saved successfully');
-
-  // 5. Final summary
-  const endTime = Date.now();
-  const elapsedSeconds = Math.round((endTime - startTime) / 1000);
-
-  console.log('\n' + '═'.repeat(80));
-  console.log('🎉 Consensus Calculation Batch Completed!\n');
-  console.log(`📅 Snapshot Date: ${snapshotDate}`);
-  console.log(`⏱️  Execution Time: ${elapsedSeconds}s`);
-  console.log(`📊 Total Records: ${metricsToInsert.length} metrics, ${diffLogsToInsert.length} diff logs`);
-  console.log('\n✅ Data ready for API queries and UI visualization');
-  console.log('═'.repeat(80) + '\n');
-
-  return true;
+  const duration = (Date.now() - startTime) / 1000;
+  console.log(`\n⏱️ Completed in ${duration.toFixed(2)}s`);
 }
 
-// Run batch
-calculateConsensusBatch()
-  .then((success) => {
-    process.exit(success ? 0 : 1);
-  })
-  .catch((error) => {
-    console.error('🚨 Fatal error:', error);
-    process.exit(1);
-  });
+calculateConsensusBatch();

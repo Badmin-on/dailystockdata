@@ -2,10 +2,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 interface TrendDataPoint {
   date: string;
-  fvb_score: number;
-  hgs_score: number;
-  rrs_score: number;
-  quad_position: string;
+  fvb_score: number | null;
+  hgs_score: number | null;
+  rrs_score: number | null;
+  quad_position: string | null;
 }
 
 interface TrendChartProps {
@@ -30,7 +30,9 @@ export default function TrendChart({ data, metric = 'all' }: TrendChartProps) {
           <div className="mt-2 space-y-1 text-sm">
             {payload.map((entry: any, index: number) => (
               <p key={index} style={{ color: entry.color }}>
-                {entry.name}: <span className="font-semibold">{entry.value.toFixed(2)}</span>
+                {entry.name}: <span className="font-semibold">
+                  {entry.value !== null && entry.value !== undefined ? entry.value.toFixed(2) : '-'}
+                </span>
               </p>
             ))}
           </div>

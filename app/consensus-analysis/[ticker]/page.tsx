@@ -25,16 +25,16 @@ interface LatestMetric {
   calc_status: string;
   eps_y1: number;
   eps_y2: number;
-  per_y1: number;
-  per_y2: number;
+  per_y1: number | null;
+  per_y2: number | null;
   eps_growth_pct: number;
-  per_growth_pct: number;
-  fvb_score: number;
-  hgs_score: number;
-  rrs_score: number;
-  quad_position: string;
-  quad_x: number;
-  quad_y: number;
+  per_growth_pct: number | null;
+  fvb_score: number | null;
+  hgs_score: number | null;
+  rrs_score: number | null;
+  quad_position: string | null;
+  quad_x: number | null;
+  quad_y: number | null;
   target_y1: number;
   target_y2: number;
 }
@@ -55,6 +55,12 @@ interface Alert {
   message: string;
   severity: 'info' | 'warning' | 'danger';
 }
+
+// Helper for safe formatting
+const formatValue = (value: number | null | undefined, decimals: number = 1, suffix: string = '') => {
+  if (value === null || value === undefined) return '-';
+  return `${value.toFixed(decimals)}${suffix}`;
+};
 
 export default function CompanyDetailPage() {
   const params = useParams();
@@ -137,7 +143,7 @@ export default function CompanyDetailPage() {
       });
     }
 
-    if (metric.fvb_score > 0.3) {
+    if (metric.fvb_score !== null && metric.fvb_score > 0.3) {
       alerts.push({
         type: 'HIGH_FVB',
         message: '높은 FVB: 실적 성장이 밸류에이션보다 빠릅니다',
@@ -148,7 +154,8 @@ export default function CompanyDetailPage() {
     return alerts;
   };
 
-  const getQuadrantLabel = (quad: string): string => {
+  const getQuadrantLabel = (quad: string | null): string => {
+    if (!quad) return '데이터 없음';
     switch (quad) {
       case 'Q1_GROWTH_RERATING':
         return 'Q1 성장+리레이팅';
@@ -163,7 +170,8 @@ export default function CompanyDetailPage() {
     }
   };
 
-  const getQuadrantColor = (quad: string): string => {
+  const getQuadrantColor = (quad: string | null): string => {
+    if (!quad) return 'bg-gray-100 text-gray-500';
     switch (quad) {
       case 'Q1_GROWTH_RERATING':
         return 'bg-yellow-100 text-yellow-800';
@@ -258,7 +266,7 @@ export default function CompanyDetailPage() {
           <div className="bg-white rounded-lg shadow p-4 md:p-6">
             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">FVB Score</h3>
             <div className="text-2xl md:text-3xl font-bold text-blue-600">
-              {latestMetric.fvb_score.toFixed(2)}
+              {formatValue(latestMetric.fvb_score, 2)}
             </div>
             {diffLog?.fvb_diff_d1 !== null && diffLog?.fvb_diff_d1 !== undefined && (
               <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.fvb_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -274,7 +282,7 @@ export default function CompanyDetailPage() {
           <div className="bg-white rounded-lg shadow p-4 md:p-6">
             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">HGS Score</h3>
             <div className="text-2xl md:text-3xl font-bold text-green-600">
-              {latestMetric.hgs_score.toFixed(1)}
+              {formatValue(latestMetric.hgs_score, 1)}
             </div>
             {diffLog?.hgs_diff_d1 !== null && diffLog?.hgs_diff_d1 !== undefined && (
               <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.hgs_diff_d1 >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -290,7 +298,7 @@ export default function CompanyDetailPage() {
           <div className="bg-white rounded-lg shadow p-4 md:p-6">
             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">RRS Score</h3>
             <div className="text-2xl md:text-3xl font-bold text-red-600">
-              {latestMetric.rrs_score.toFixed(1)}
+              {formatValue(latestMetric.rrs_score, 1)}
             </div>
             {diffLog?.rrs_diff_d1 !== null && diffLog?.rrs_diff_d1 !== undefined && (
               <p className={`text-xs md:text-sm mt-1 md:mt-2 ${diffLog.rrs_diff_d1 >= 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -321,13 +329,13 @@ export default function CompanyDetailPage() {
             <div>
               <p className="text-xs md:text-sm text-gray-600">EPS 성장률</p>
               <p className={`text-lg md:text-xl font-semibold mt-1 ${latestMetric.eps_growth_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {latestMetric.eps_growth_pct.toFixed(1)}%
+                {formatValue(latestMetric.eps_growth_pct, 1, '%')}
               </p>
             </div>
             <div>
               <p className="text-xs md:text-sm text-gray-600">PER 변화율</p>
-              <p className={`text-lg md:text-xl font-semibold mt-1 ${latestMetric.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {latestMetric.per_growth_pct.toFixed(1)}%
+              <p className={`text-lg md:text-xl font-semibold mt-1 ${latestMetric.per_growth_pct !== null && latestMetric.per_growth_pct >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {formatValue(latestMetric.per_growth_pct, 1, '%')}
               </p>
             </div>
           </div>
