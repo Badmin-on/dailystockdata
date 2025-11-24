@@ -101,7 +101,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-right">
                 <div className="text-sm font-bold text-gray-100">
-                  {company.current_price ? `${company.current_price.toLocaleString()}원` : '-'}
+                  {company.current_price ? `${Number(company.current_price).toLocaleString()}원` : '-'}
                 </div>
               </div>
             </div>
