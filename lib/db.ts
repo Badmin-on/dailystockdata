@@ -1,14 +1,22 @@
 
 import { Pool } from 'pg';
 
-// Use environment variables for connection
-// Note: In Next.js, we should be careful about creating too many connections in dev mode
-// but for this scale, a simple global pool pattern works well.
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+    console.error('❌ DATABASE_URL is not defined in environment variables.');
+}
+
+// Check if connecting to Supabase (usually contains 'supabase.co' or region specific host)
+const isSupabase = connectionString?.includes('supabase.co') || connectionString?.includes('aws-0-ap-northeast-2');
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 10, // Max connections in pool
+    connectionString,
+    // Force SSL for Supabase, otherwise respect NODE_ENV
+    ssl: isSupabase || process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
+    max: 10,
     idleTimeoutMillis: 30000,
 });
 
