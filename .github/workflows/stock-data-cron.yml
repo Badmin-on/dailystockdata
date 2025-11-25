@@ -55,8 +55,8 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
-          echo "🚀 FnGuide 재무 데이터 수집 시작..."
-          node fnguide-scraper.js
+          echo "🚀 FnGuide 재무 데이터 수집 시작 (New)..."
+          npx tsx scrape-all-fnguide.ts
           echo "✅ FnGuide 재무 데이터 수집 완료!"
           echo "ℹ️ mv_stock_analysis는 Regular View로 자동 갱신됩니다."
 
