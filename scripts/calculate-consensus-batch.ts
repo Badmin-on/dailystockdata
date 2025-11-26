@@ -12,7 +12,23 @@ import { resolve } from 'path';
 config({ path: resolve(__dirname, '../.env.local') });
 
 // Import dependencies after env vars are loaded
-const { supabaseAdmin } = require('../lib/supabase');
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Admin Client locally
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+  process.exit(1);
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 const { calculateConsensusResult } = require('../lib/consensus/calculator');
 import type { YearPair } from '../lib/types/consensus';
 

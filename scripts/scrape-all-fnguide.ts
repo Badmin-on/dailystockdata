@@ -13,7 +13,23 @@ import * as cheerio from 'cheerio';
 import iconv from 'iconv-lite';
 
 // Import dependencies after env vars are loaded
-const { supabaseAdmin } = require('../lib/supabase');
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase Admin Client locally
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+    process.exit(1);
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
 
 // Rate Limiting
 const RATE_LIMIT_DELAY = 1000; // 1 second
