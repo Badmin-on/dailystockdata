@@ -287,8 +287,8 @@ async function calculateConsensusBatch() {
     for (let i = 0; i < metricsToInsert.length; i += 1000) {
       const chunk = metricsToInsert.slice(i, i + 1000);
       const { error } = await supabaseAdmin
-        .from('consensus_metrics')
-        .upsert(chunk, { onConflict: 'company_id,snapshot_date,target_y2' });
+        .from('consensus_metric_daily')
+        .upsert(chunk, { onConflict: 'snapshot_date,ticker,target_y1,target_y2' });
 
       if (error) {
         console.error('❌ Error saving batch:', error);
