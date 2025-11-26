@@ -204,7 +204,11 @@ async function main() {
 
     let successCount = 0;
     let failCount = 0;
-    const scrapeDate = new Date().toISOString().split('T')[0];
+    // Use Korea Standard Time (KST = UTC+9)
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000; // 9 hours in milliseconds
+    const kstDate = new Date(now.getTime() + kstOffset);
+    const scrapeDate = kstDate.toISOString().split('T')[0];
 
     for (let i = 0; i < companies.length; i++) {
         const company = companies[i];
