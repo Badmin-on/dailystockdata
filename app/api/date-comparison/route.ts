@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
       // 시작 날짜 데이터 조회
       let startQuery = supabaseAdmin
         .from('financial_data_extended')
-        .select('company_id, year, ' + metricColumn + ', is_estimate, companies!inner(id, name, code, market)')
+        .select('company_id, year, ' + metricColumn + ', is_estimate, data_source, companies!inner(id, name, code, market)')
         .eq('scrape_date', actualStartDate)
         .not(metricColumn, 'is', null)
         .neq(metricColumn, 0);
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
       // 종료 날짜 데이터 조회
       let endQuery = supabaseAdmin
         .from('financial_data_extended')
-        .select('company_id, year, ' + metricColumn + ', is_estimate')
+        .select('company_id, year, ' + metricColumn + ', is_estimate, data_source')
         .eq('scrape_date', actualEndDate)
         .in('company_id', companyIds)
         .not(metricColumn, 'is', null);
@@ -228,9 +228,19 @@ export async function GET(request: NextRequest) {
 
           if (!endRow) return null;
 
-          // Convert from won to 억원 (100 million won)
-          const startValue = parseFloat(startRow[metricColumn]) / 100_000_000;
-          const endValue = parseFloat(endRow[metricColumn]) / 100_000_000;
+          // Convert based on data_source
+          // fnguide: stored in won (원) → divide by 100,000,000 to get 억원
+          // naver: already stored in 억원 → use as is
+          const startRawValue = parseFloat(startRow[metricColumn]);
+          const endRawValue = parseFloat(endRow[metricColumn]);
+
+          const startValue = startRow.data_source === 'fnguide'
+            ? startRawValue / 100_000_000
+            : startRawValue;
+
+          const endValue = endRow.data_source === 'fnguide'
+            ? endRawValue / 100_000_000
+            : endRawValue;
 
           let growthRate: number | null = null;
           if (startValue > 0) {
