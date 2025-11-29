@@ -136,9 +136,9 @@ export async function GET(request: NextRequest) {
           p_sort_order: sortOrder,
           p_limit: limit
         });
-      */
-
+      
       if (error) throw error;
+      */
 
       if (functionResult && functionResult.length > 0) {
         limited = functionResult.map((row: any) => ({
