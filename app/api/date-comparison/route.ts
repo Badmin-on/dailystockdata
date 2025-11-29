@@ -228,8 +228,9 @@ export async function GET(request: NextRequest) {
 
           if (!endRow) return null;
 
-          const startValue = parseFloat(startRow[metricColumn]);
-          const endValue = parseFloat(endRow[metricColumn]);
+          // Convert from won to 억원 (100 million won)
+          const startValue = parseFloat(startRow[metricColumn]) / 100_000_000;
+          const endValue = parseFloat(endRow[metricColumn]) / 100_000_000;
 
           let growthRate: number | null = null;
           if (startValue > 0) {
@@ -255,10 +256,10 @@ export async function GET(request: NextRequest) {
             code: startRow.companies.code,
             market: startRow.companies.market,
             year: startRow.year,
-            startValue: startValue,
-            endValue: endValue,
+            startValue: parseFloat(startValue.toFixed(2)),
+            endValue: parseFloat(endValue.toFixed(2)),
             growthRate: growthRate ? parseFloat(growthRate.toFixed(2)) : null,
-            absoluteChange: absoluteChange,
+            absoluteChange: parseFloat(absoluteChange.toFixed(2)),
             valueUnit: '억원',
             isLossToProfit: startValue < 0 && endValue > 0,
             startIsEstimate: startRow.is_estimate || false,
