@@ -14,7 +14,7 @@ export async function GET() {
 
     while (allDates.length < targetUniqueDates && page < 200) {
       const { data, error } = await supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('scrape_date')
         .order('scrape_date', { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);

@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       // 이유: 하나의 scrape_date에 여러 연도 데이터가 모두 존재하므로
       //       최신 날짜는 year와 무관하게 동일함
       const { data: latestData } = await supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('scrape_date')
         .order('scrape_date', { ascending: false })
         .limit(1)
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
 
       while (allDates.length < targetUniqueDates && page < 200) {
         const { data, error } = await supabaseAdmin
-          .from('financial_data')
+          .from('financial_data_extended')
           .select('scrape_date')
           .order('scrape_date', { ascending: false })
           .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
     }
 
     let query = supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select(`
         company_id,
         year,
@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
       if (!date) return Promise.resolve({ data: [] });
 
       let query = supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('company_id,year,revenue,operating_profit')
         .eq('scrape_date', date)
         .in('company_id', companyIds);

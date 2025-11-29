@@ -1,111 +1,41 @@
-/**
- * Check consensus data in database
- */
-
-import { config } from 'dotenv';
-import { resolve } from 'path';
-config({ path: resolve(__dirname, '../.env.local') });
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// Create Supabase client directly
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || '';
+// Load env
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase environment variables');
-  console.error('Required: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_KEY');
-  process.exit(1);
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+async function checkData() {
+  console.log('Checking consensus tables for 2025-11-25...');
 
-async function checkConsensusData() {
-  console.log('🔍 Checking consensus data in database...\n');
-
-  // 1. Check consensus_metric_daily
-  const { data: metrics, error: metricsError } = await supabaseAdmin
+  // 1. Check consensus_metric_daily (API uses this)
+  const { count: countDaily, error: errorDaily } = await supabase
     .from('consensus_metric_daily')
-    .select('snapshot_date, ticker, calc_status')
-    .order('snapshot_date', { ascending: false })
-    .limit(10);
+    .select('*', { count: 'exact', head: true })
+    .eq('snapshot_date', '2025-11-25');
 
-  if (metricsError) {
-    console.error('❌ Error checking metrics:', metricsError);
+  console.log(`consensus_metric_daily (API target): ${countDaily} rows (Error: ${errorDaily?.message})`);
+
+  // 2. Check consensus_metrics (Script writes to this)
+  const { count: countMetrics, error: errorMetrics } = await supabase
+    .from('consensus_metrics')
+    .select('*', { count: 'exact', head: true })
+    .eq('snapshot_date', '2025-11-25');
+
+  console.log(`consensus_metrics (Script target): ${countMetrics} rows (Error: ${errorMetrics?.message})`);
+
+  if (countDaily === 0 && countMetrics === 0) {
+    console.log('❌ No consensus data in EITHER table for today.');
+  } else if ((countMetrics || 0) > 0 && countDaily === 0) {
+    console.log('⚠️ Data exists in consensus_metrics but NOT in consensus_metric_daily. API is reading wrong table or view not updated.');
   } else {
-    console.log('📊 consensus_metric_daily:');
-    console.log(`   Total records checked: ${metrics?.length || 0}`);
-    if (metrics && metrics.length > 0) {
-      console.log('   Recent records:');
-      const uniqueDates = [...new Set(metrics.map(m => m.snapshot_date))];
-      console.log(`   Unique dates: ${uniqueDates.join(', ')}`);
-      console.log(`   Sample tickers: ${metrics.slice(0, 5).map(m => m.ticker).join(', ')}`);
-    }
-  }
-
-  // 2. Count total records
-  const { count, error: countError } = await supabaseAdmin
-    .from('consensus_metric_daily')
-    .select('*', { count: 'exact', head: true });
-
-  if (!countError) {
-    console.log(`\n📈 Total consensus_metric_daily records: ${count || 0}`);
-  }
-
-  // 3. Check for SK케미칼 (285130)
-  const { data: skData, error: skError } = await supabaseAdmin
-    .from('consensus_metric_daily')
-    .select('*')
-    .eq('ticker', '285130')
-    .order('snapshot_date', { ascending: false })
-    .limit(5);
-
-  console.log('\n🔬 SK케미칼 (285130) data:');
-  if (skError) {
-    console.error('   Error:', skError);
-  } else if (!skData || skData.length === 0) {
-    console.log('   ❌ No data found for 285130');
-  } else {
-    console.log(`   ✅ Found ${skData.length} records`);
-    skData.forEach(record => {
-      console.log(`   - ${record.snapshot_date}: FVB=${record.fvb_score}, HGS=${record.hgs_score}, Status=${record.calc_status}`);
-    });
-  }
-
-  // 4. Check financial_data_extended for 285130
-  const { data: companies } = await supabaseAdmin
-    .from('companies')
-    .select('id, name, code')
-    .eq('code', '285130')
-    .single();
-
-  if (companies) {
-    console.log(`\n🏢 Company info: ${companies.name} (${companies.code}), ID: ${companies.id}`);
-
-    const { data: financialData } = await supabaseAdmin
-      .from('financial_data_extended')
-      .select('*')
-      .eq('company_id', companies.id)
-      .in('year', [2024, 2025]);
-
-    console.log('\n💰 Financial data for 285130:');
-    if (!financialData || financialData.length === 0) {
-      console.log('   ❌ No financial data found');
-    } else {
-      console.log(`   ✅ Found ${financialData.length} records`);
-      financialData.forEach(record => {
-        console.log(`   - Year ${record.year}: EPS=${record.eps}, PER=${record.per}`);
-      });
-    }
+    console.log('✅ Data exists.');
   }
 }
 
-checkConsensusData()
-  .then(() => {
-    console.log('\n✅ Check complete');
-    process.exit(0);
-  })
-  .catch(err => {
-    console.error('❌ Fatal error:', err);
-    process.exit(1);
-  });
+checkData();

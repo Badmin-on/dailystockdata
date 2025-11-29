@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // 2. 컨센서스 데이터 조회 (financial_data)
     let consensusQuery = supabase
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('scrape_date, year, revenue, operating_profit')
       .eq('company_id', companies.id)
       .in('year', years)

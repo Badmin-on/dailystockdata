@@ -5,7 +5,7 @@ export async function GET() {
   try {
     // 1. 재무 데이터 최신 날짜 조회
     const { data: latestFinancial, error: financialError } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
       .limit(1)
@@ -17,7 +17,7 @@ export async function GET() {
 
     // 해당 날짜의 레코드 수
     const { count: financialCount } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('*', { count: 'exact', head: true })
       .eq('scrape_date', latestFinancial?.scrape_date);
 
@@ -41,7 +41,7 @@ export async function GET() {
 
     // 3. 모든 재무 데이터 날짜 이력 (최대 100,000개 조회)
     const { data: recentDates } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
       .limit(100000);

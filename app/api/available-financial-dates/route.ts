@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Supabase에서 해당 기간의 distinct scrape_date 조회
     const { data, error } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('scrape_date')
       .gte('scrape_date', startDate)
       .lte('scrape_date', endDateStr)

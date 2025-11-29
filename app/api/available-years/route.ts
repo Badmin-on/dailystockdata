@@ -10,7 +10,7 @@ export async function GET() {
     if (error) {
       // RPC 함수가 없으면 fallback
       const { data: allData, error: fallbackError } = await supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('year');
 
       if (fallbackError) throw fallbackError;

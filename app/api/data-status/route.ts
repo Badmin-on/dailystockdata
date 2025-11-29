@@ -11,7 +11,7 @@ export async function GET() {
       .select('*', { count: 'exact', head: true });
 
     const { count: totalFinancial } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('*', { count: 'exact', head: true });
 
     const { count: totalPrices } = await supabaseAdmin
@@ -27,7 +27,7 @@ export async function GET() {
       .single();
 
     const { data: latestFinancialDate } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('scrape_date')
       .order('scrape_date', { ascending: false })
       .limit(1)

@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
     try {
       console.log('🚀 Phase 1: Attempting find_closest_date_range()');
 
+      // RPC 함수가 구버전 테이블을 참조할 수 있으므로 비활성화하고 Fallback 사용
+      throw new Error('Force fallback to client-side query');
+
+      /*
       const { data: dateRange, error } = await supabaseAdmin
         .rpc('find_closest_date_range', {
           start_date: start.toISOString().split('T')[0],
@@ -65,6 +69,7 @@ export async function GET(request: NextRequest) {
       } else {
         throw new Error('No date range returned');
       }
+      */
     } catch (err) {
       console.warn('⚠️  Phase 1 failed, using fallback:', err);
 
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
         const ascending = direction === 'after';
 
         let query = supabaseAdmin
-          .from('financial_data')
+          .from('financial_data_extended')
           .select('scrape_date');
 
         if (direction === 'before') {
@@ -117,6 +122,10 @@ export async function GET(request: NextRequest) {
     try {
       console.log('🚀 Phase 2: Attempting get_date_comparison()');
 
+      // RPC 함수가 구버전 테이블을 참조할 수 있으므로 비활성화하고 Fallback 사용
+      throw new Error('Force fallback to client-side query');
+
+      /*
       const { data: functionResult, error } = await supabaseAdmin
         .rpc('get_date_comparison', {
           p_start_date: actualStartDate,
@@ -127,6 +136,7 @@ export async function GET(request: NextRequest) {
           p_sort_order: sortOrder,
           p_limit: limit
         });
+      */
 
       if (error) throw error;
 
@@ -161,7 +171,7 @@ export async function GET(request: NextRequest) {
 
       // 시작 날짜 데이터 조회
       let startQuery = supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('company_id, year, ' + metricColumn + ', is_estimate, companies!inner(id, name, code, market)')
         .eq('scrape_date', actualStartDate)
         .not(metricColumn, 'is', null)
@@ -185,7 +195,7 @@ export async function GET(request: NextRequest) {
 
       // 종료 날짜 데이터 조회
       let endQuery = supabaseAdmin
-        .from('financial_data')
+        .from('financial_data_extended')
         .select('company_id, year, ' + metricColumn + ', is_estimate')
         .eq('scrape_date', actualEndDate)
         .in('company_id', companyIds)

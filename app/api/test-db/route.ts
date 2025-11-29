@@ -42,7 +42,7 @@ export async function GET() {
       .select('*', { count: 'exact', head: true });
 
     const { count: financialCount } = await supabaseAdmin
-      .from('financial_data')
+      .from('financial_data_extended')
       .select('*', { count: 'exact', head: true });
 
     const { count: pricesCount } = await supabaseAdmin

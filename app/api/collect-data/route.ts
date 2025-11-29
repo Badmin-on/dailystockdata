@@ -27,13 +27,13 @@ function validateCronSecret(request: NextRequest): boolean {
   // URL 쿼리 파라미터에서 secret 확인
   const searchParams = request.nextUrl.searchParams;
   const cronSecret = searchParams.get('secret');
-  
+
   // Authorization 헤더에서도 확인
   const authHeader = request.headers.get('authorization');
   const bearerSecret = authHeader?.replace('Bearer ', '');
-  
+
   const expectedSecret = process.env.CRON_SECRET;
-  
+
   return cronSecret === expectedSecret || bearerSecret === expectedSecret;
 }
 
@@ -63,23 +63,23 @@ export async function GET(request: NextRequest) {
     // 2. 기업 목록 수집 (KOSPI 500 + KOSDAQ 500)
     // ============================================
     console.log('📋 [1/4] 기업 목록 수집 중...');
-    
+
     const kospiStocks = await fetchTopStocks('KOSPI', 500);
     console.log(`   ✅ KOSPI ${kospiStocks.length}개 수집`);
-    
+
     const kosdaqStocks = await fetchTopStocks('KOSDAQ', 500);
     console.log(`   ✅ KOSDAQ ${kosdaqStocks.length}개 수집`);
 
     const allStocks = [...kospiStocks, ...kosdaqStocks];
     const totalCompanies = allStocks.length;
-    
+
     console.log(`   ✅ 총 ${totalCompanies}개 기업 목록 수집 완료\n`);
 
     // ============================================
     // 3. 각 기업별 재무 데이터 수집
     // ============================================
     console.log(`📊 [2/4] 재무 데이터 수집 중 (총 ${totalCompanies}개)...`);
-    
+
     let successCount = 0;
     let errorCount = 0;
     let skipCount = 0;
@@ -89,53 +89,53 @@ export async function GET(request: NextRequest) {
     const BATCH_SIZE = 20;
     for (let i = 0; i < allStocks.length; i++) {
       const stock = allStocks[i];
-      
+
       try {
         // FnGuide에서 재무 데이터 수집
         const rawData = await fetchStockFinancialData(stock.code);
-        
+
         // 데이터 검증
         if (!rawData.headers || rawData.headers.length === 0) {
           console.log(`   ⚠️ 데이터 없음: ${stock.name} (${stock.code})`);
           skipCount++;
           continue;
         }
-        
+
         // 데이터 변환
         const financialData = transformFinancialData(stock, rawData);
         allFinancialData.push(financialData);
-        
+
         successCount++;
-        
+
         // 진행률 출력 (20개마다)
         if ((i + 1) % BATCH_SIZE === 0 || i === allStocks.length - 1) {
           const progress = ((i + 1) / totalCompanies * 100).toFixed(1);
           console.log(`   📈 진행: ${i + 1}/${totalCompanies} (${progress}%) - 성공: ${successCount}, 스킵: ${skipCount}`);
         }
-        
+
         // Rate limiting (초당 1개, 원본 로직 유지)
         await delay(1000);
-        
+
       } catch (error) {
         errorCount++;
-        console.error(`   ❌ 오류: ${stock.name} (${stock.code})`, 
+        console.error(`   ❌ 오류: ${stock.name} (${stock.code})`,
           error instanceof Error ? error.message : String(error));
       }
     }
-    
+
     console.log(`   ✅ 재무 데이터 수집 완료: 성공 ${successCount}, 실패 ${errorCount}, 스킵 ${skipCount}\n`);
 
     // ============================================
     // 4. Supabase에 데이터 저장
     // ============================================
     console.log(`💾 [3/4] Supabase 저장 중 (${allFinancialData.length}개 기업)...`);
-    
+
     let companiesSaved = 0;
     let financialRecordsSaved = 0;
 
     for (let i = 0; i < allFinancialData.length; i++) {
       const item = allFinancialData[i];
-      
+
       try {
         // 4-1. 회사 정보 등록/업데이트
         const { data: company, error: companyError } = await supabaseAdmin
@@ -155,14 +155,14 @@ export async function GET(request: NextRequest) {
           console.error(`   ❌ 회사 등록 실패: ${item.company.name}`, companyError);
           continue;
         }
-        
+
         companiesSaved++;
 
         // 4-2. 재무 데이터 저장 (각 연도별)
         for (const yearData of item.years_data) {
           // 증감률은 계산하지만 DB에는 저장하지 않음 (원본 로직 유지)
           const { error: finError } = await supabaseAdmin
-            .from('financial_data')
+            .from('financial_data_extended')
             .upsert(
               {
                 company_id: company.id,
@@ -181,19 +181,19 @@ export async function GET(request: NextRequest) {
             financialRecordsSaved++;
           }
         }
-        
+
         // 진행률 출력 (50개마다)
         if ((i + 1) % 50 === 0 || i === allFinancialData.length - 1) {
           const progress = ((i + 1) / allFinancialData.length * 100).toFixed(1);
           console.log(`   💾 저장 진행: ${i + 1}/${allFinancialData.length} (${progress}%)`);
         }
-        
+
       } catch (error) {
-        console.error(`   ❌ 저장 오류: ${item.company.name}`, 
+        console.error(`   ❌ 저장 오류: ${item.company.name}`,
           error instanceof Error ? error.message : String(error));
       }
     }
-    
+
     console.log(`   ✅ 저장 완료: 기업 ${companiesSaved}개, 재무레코드 ${financialRecordsSaved}개\n`);
 
     // ============================================
@@ -257,7 +257,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const duration = Math.round((Date.now() - startTime) / 1000);
     console.error('❌ 데이터 수집 중 치명적 오류:', error);
-    
+
     return NextResponse.json(
       {
         success: false,
