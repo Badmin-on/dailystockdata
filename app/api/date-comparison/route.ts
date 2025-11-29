@@ -136,10 +136,11 @@ export async function GET(request: NextRequest) {
           p_sort_order: sortOrder,
           p_limit: limit
         });
-      
+      /*
       if (error) throw error;
       */
 
+      /*
       if (functionResult && functionResult.length > 0) {
         limited = functionResult.map((row: any) => ({
           id: row.company_id,
@@ -161,6 +162,10 @@ export async function GET(request: NextRequest) {
       } else {
         throw new Error('No data returned from function');
       }
+      */
+
+      // Force fallback to Phase 1 method
+      throw new Error('Using Phase 1 fallback method');
     } catch (err) {
       console.warn('⚠️  Phase 2 failed, using Phase 1 fallback:', err);
 
