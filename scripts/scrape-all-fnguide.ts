@@ -111,8 +111,14 @@ function parseFnGuideData(html: string) {
         const text = $(el).text().trim();
         const yearMatch = text.match(/(\d{4})\/\d{2}/);
         if (yearMatch) {
+            // CRITICAL FIX: FnGuide year notation
+            // "2024/12" means fiscal year ending Dec 2024, which IS the 2024 year data
+            // Use the year as-is (no offset needed)
+            // Example: FnGuide "2024/12" → Store as 2024 (matches Naver's 2024)
+            const year = parseInt(yearMatch[1]);
+
             years.push({
-                year: parseInt(yearMatch[1]),
+                year: year,
                 isEstimate: text.includes('(E)') || text.includes('컨센서스') || text.includes('추정치'),
                 index: i
             });
