@@ -152,7 +152,9 @@ function parseFnGuideData(html: string) {
         const getVal = (field: string) => {
             if (!rowMap[field]) return null;
 
-            const cell = rowMap[field][y.index - 1];
+            // CRITICAL FIX: Use y.index directly, not y.index - 1
+            // The index from header th already corresponds to the correct td
+            const cell = rowMap[field][y.index];
             if (!cell) return null;
 
             const text = $(cell).text().trim().replace(/,/g, '');
