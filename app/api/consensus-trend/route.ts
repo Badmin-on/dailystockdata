@@ -183,10 +183,20 @@ function calculateInsights(data: any[], years: number[]) {
     if (recentRevenue.length >= 2) {
       const firstRevenue = recentRevenue[0];
       const lastRevenue = recentRevenue[recentRevenue.length - 1];
-      const changeRate = ((lastRevenue - firstRevenue) / firstRevenue * 100).toFixed(2);
+
+      // 0으로 나누기 방지 및 비정상적인 값 체크
+      let changeRate = 0;
+      if (firstRevenue === 0) {
+        changeRate = lastRevenue === 0 ? 0 : (lastRevenue > 0 ? 10000 : -10000);
+      } else {
+        changeRate = ((lastRevenue - firstRevenue) / firstRevenue * 100);
+        // 비정상적으로 큰 값 방지 (±10000% 이상은 제한)
+        if (changeRate > 10000) changeRate = 10000;
+        if (changeRate < -10000) changeRate = -10000;
+      }
 
       stats.recent30Days[year] = {
-        revenue_change: parseFloat(changeRate),
+        revenue_change: parseFloat(changeRate.toFixed(2)),
         first: firstRevenue,
         last: lastRevenue,
       };
@@ -198,9 +208,19 @@ function calculateInsights(data: any[], years: number[]) {
   if (recentPrices.length >= 2) {
     const firstPrice = recentPrices[0];
     const lastPrice = recentPrices[recentPrices.length - 1];
-    const priceChangeRate = ((lastPrice - firstPrice) / firstPrice * 100).toFixed(2);
 
-    stats.recent30Days.price_change = parseFloat(priceChangeRate);
+    // 0으로 나누기 방지 및 비정상적인 값 체크
+    let priceChangeRate = 0;
+    if (firstPrice === 0) {
+      priceChangeRate = lastPrice === 0 ? 0 : (lastPrice > 0 ? 10000 : -10000);
+    } else {
+      priceChangeRate = ((lastPrice - firstPrice) / firstPrice * 100);
+      // 비정상적으로 큰 값 방지 (±10000% 이상은 제한)
+      if (priceChangeRate > 10000) priceChangeRate = 10000;
+      if (priceChangeRate < -10000) priceChangeRate = -10000;
+    }
+
+    stats.recent30Days.price_change = parseFloat(priceChangeRate.toFixed(2));
     stats.recent30Days.price_first = firstPrice;
     stats.recent30Days.price_last = lastPrice;
   }

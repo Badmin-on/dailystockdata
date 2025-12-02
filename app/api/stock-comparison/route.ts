@@ -304,9 +304,25 @@ export async function GET(request: NextRequest) {
     const priceDeviations = await calculatePriceDeviations(companyIds, priceReferenceDate);
 
     const calculateGrowth = (current: number | null, previous: number | null) => {
-      if (current == null || previous == null || previous === 0) return null;
-      if (previous < 0 && current > 0) return 'Infinity';
-      return ((current - previous) / Math.abs(previous) * 100).toFixed(2);
+      // null 체크
+      if (current == null || previous == null) return null;
+
+      // 0으로 나누기 방지
+      if (previous === 0) {
+        if (current === 0) return '0.00';
+        return current > 0 ? 'Infinity' : '-Infinity';
+      }
+
+      // 정상적인 증감률 계산
+      // 주의: previous가 음수일 때도 올바르게 계산하기 위해 previous를 그대로 사용
+      const growthRate = ((current - previous) / previous * 100);
+
+      // 비정상적으로 큰 값 방지 (±10000% 이상은 Infinity로 처리)
+      if (Math.abs(growthRate) > 10000) {
+        return growthRate > 0 ? 'Infinity' : '-Infinity';
+      }
+
+      return growthRate.toFixed(2);
     };
 
     const comparisonData = todayData.map((row: any) => {
