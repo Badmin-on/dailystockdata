@@ -229,18 +229,14 @@ export async function GET(request: NextRequest) {
           if (!endRow) return null;
 
           // Convert based on data_source
-          // fnguide: stored in won (원) → divide by 100,000,000 to get 억원
-          // naver: already stored in 억원 → use as is
+          // ALL data is now stored in won (원) → always divide by 100,000,000 to get 억원
+          // fnguide: stored in won (원)
+          // naver (from Excel): also stored in won (원) after migration
           const startRawValue = parseFloat(startRow[metricColumn]);
           const endRawValue = parseFloat(endRow[metricColumn]);
 
-          const startValue = startRow.data_source === 'fnguide'
-            ? startRawValue / 100_000_000
-            : startRawValue;
-
-          const endValue = endRow.data_source === 'fnguide'
-            ? endRawValue / 100_000_000
-            : endRawValue;
+          const startValue = startRawValue / 100_000_000;
+          const endValue = endRawValue / 100_000_000;
 
           let growthRate: number | null = null;
           if (startValue > 0) {
