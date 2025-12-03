@@ -304,9 +304,10 @@ export async function GET(request: NextRequest) {
     const priceDeviations = await calculatePriceDeviations(companyIds, priceReferenceDate);
 
     // 단위 변환: 원 → 억원
-    const toHundredMillion = (value: number | null) => {
-      if (value === null) return null;
-      return Math.round(value / 100_000_000);
+    const toHundredMillion = (value: number | null | undefined) => {
+      if (value === null || value === undefined) return null;
+      const result = Math.round(value / 100_000_000);
+      return isNaN(result) ? null : result;
     };
 
     const calculateGrowth = (current: number | null, previous: number | null) => {
