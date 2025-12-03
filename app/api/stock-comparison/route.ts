@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
 
       let query = supabaseAdmin
         .from('financial_data_extended')
-        .select('company_id,year,revenue,operating_profit')
+        .select('company_id,year,revenue,operating_profit,data_source')
         .eq('scrape_date', date)
         .in('company_id', companyIds);
 
@@ -290,8 +290,18 @@ export async function GET(request: NextRequest) {
     const createMap = (data: any[]) => {
       const map: any = {};
       data?.forEach((item: any) => {
+        // 0인 값은 무시 (잘못된 백업 데이터)
+        if (item.revenue === 0 && item.operating_profit === 0) {
+          return;
+        }
+
         const key = `${item.company_id}-${item.year}`;
-        map[key] = item;
+        const existing = map[key];
+
+        // fnguide 데이터를 우선적으로 사용
+        if (!existing || item.data_source === 'fnguide') {
+          map[key] = item;
+        }
       });
       return map;
     };
