@@ -303,6 +303,12 @@ export async function GET(request: NextRequest) {
 
     const priceDeviations = await calculatePriceDeviations(companyIds, priceReferenceDate);
 
+    // 단위 변환: 원 → 억원
+    const toHundredMillion = (value: number | null) => {
+      if (value === null) return null;
+      return Math.round(value / 100_000_000);
+    };
+
     const calculateGrowth = (current: number | null, previous: number | null) => {
       // null 체크
       if (current == null || previous == null) return null;
@@ -369,34 +375,34 @@ export async function GET(request: NextRequest) {
         is_highlighted: isHighlighted,
         has_daily_surge: hasDailySurge,
 
-        current_revenue: row.revenue,
-        current_op_profit: row.operating_profit,
+        current_revenue: toHundredMillion(row.revenue),
+        current_op_profit: toHundredMillion(row.operating_profit),
 
         current_price: priceInfo.current_price,
         ma120: priceInfo.ma120,
         price_deviation: priceInfo.deviation,
         price_reference_date: priceReferenceDate, // 주가 기준 날짜
 
-        prev_day_revenue: prevDayRecord?.revenue || null,
-        prev_day_op_profit: prevDayRecord?.operating_profit || null,
+        prev_day_revenue: toHundredMillion(prevDayRecord?.revenue),
+        prev_day_op_profit: toHundredMillion(prevDayRecord?.operating_profit),
         revenue_growth_prev_day: revenueGrowthPrevDay,
         op_profit_growth_prev_day: opProfitGrowthPrevDay,
         prev_day_date: prevDayDate,
 
-        onemonth_ago_revenue: oneMonthRecord?.revenue || null,
-        onemonth_ago_op_profit: oneMonthRecord?.operating_profit || null,
+        onemonth_ago_revenue: toHundredMillion(oneMonthRecord?.revenue),
+        onemonth_ago_op_profit: toHundredMillion(oneMonthRecord?.operating_profit),
         revenue_growth_1month: revenueGrowth1Month,
         op_profit_growth_1month: opProfitGrowth1Month,
         onemonth_ago_date: oneMonthAgoDate,
 
-        threemonth_ago_revenue: threeMonthRecord?.revenue || null,
-        threemonth_ago_op_profit: threeMonthRecord?.operating_profit || null,
+        threemonth_ago_revenue: toHundredMillion(threeMonthRecord?.revenue),
+        threemonth_ago_op_profit: toHundredMillion(threeMonthRecord?.operating_profit),
         revenue_growth_3month: revenueGrowth3Month,
         op_profit_growth_3month: opProfitGrowth3Month,
         threemonth_ago_date: threeMonthsAgoDate,
 
-        oneyear_ago_revenue: oneYearRecord?.revenue || null,
-        oneyear_ago_op_profit: oneYearRecord?.operating_profit || null,
+        oneyear_ago_revenue: toHundredMillion(oneYearRecord?.revenue),
+        oneyear_ago_op_profit: toHundredMillion(oneYearRecord?.operating_profit),
         revenue_growth_1year: revenueGrowth1Year,
         op_profit_growth_1year: opProfitGrowth1Year,
         oneyear_ago_date: oneYearAgoDate,
