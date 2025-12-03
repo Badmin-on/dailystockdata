@@ -196,7 +196,18 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const companyIds = startData.map((d: any) => d.company_id);
+      // 중복 제거: fnguide 우선
+      const startMap = new Map();
+      startData.forEach((item: any) => {
+        const key = item.company_id + '-' + item.year;
+        const existing = startMap.get(key);
+        if (!existing || item.data_source === 'fnguide') {
+          startMap.set(key, item);
+        }
+      });
+      const deduplicatedStartData = Array.from(startMap.values());
+
+      const companyIds = deduplicatedStartData.map((d: any) => d.company_id);
 
       // 종료 날짜 데이터 조회
       let endQuery = supabaseAdmin
@@ -214,14 +225,18 @@ export async function GET(request: NextRequest) {
 
       if (endError) throw endError;
 
-      // 데이터 비교
+      // 데이터 비교 (중복 제거: fnguide 우선)
       const endMap = new Map();
       endData?.forEach((item: any) => {
         const key = item.company_id + '-' + item.year;
-        endMap.set(key, item);
+        const existing = endMap.get(key);
+        // fnguide 데이터를 우선적으로 사용
+        if (!existing || item.data_source === 'fnguide') {
+          endMap.set(key, item);
+        }
       });
 
-      const comparisons = startData
+      const comparisons = deduplicatedStartData
         .map((startRow: any) => {
           const key = startRow.company_id + '-' + startRow.year;
           const endRow = endMap.get(key);
