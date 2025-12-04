@@ -45,11 +45,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. 컨센서스 데이터 조회 (financial_data)
+    // 잘못된 데이터 필터링: fnguide 우선 또는 매출 ≥ 1000억
     let consensusQuery = supabase
       .from('financial_data_extended')
-      .select('scrape_date, year, revenue, operating_profit')
+      .select('scrape_date, year, revenue, operating_profit, data_source')
       .eq('company_id', companies.id)
       .in('year', years)
+      .gte('revenue', 100_000_000_000)  // 1000억원 이상만 (잘못된 단위 데이터 제외)
       .order('scrape_date', { ascending: true })
       .order('year', { ascending: true });
 
@@ -94,14 +96,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 4. 데이터 병합 및 가공
-    // scrape_date와 date를 매칭하여 통합 데이터 생성
+    // 4. 데이터 병합 및 가공 (fnguide 우선)
+    // 같은 날짜에 fnguide와 naver가 있으면 fnguide 사용
     const consensusByDate = new Map<string, any[]>();
-    consensusData?.forEach(item => {
-      if (!consensusByDate.has(item.scrape_date)) {
-        consensusByDate.set(item.scrape_date, []);
+
+    // fnguide 데이터 우선 정렬 (fnguide가 뒤에 오면 덮어쓰기)
+    const sortedData = [...(consensusData || [])].sort((a, b) => {
+      if (a.data_source === 'fnguide' && b.data_source !== 'fnguide') return 1;
+      if (a.data_source !== 'fnguide' && b.data_source === 'fnguide') return -1;
+      return 0;
+    });
+
+    sortedData.forEach(item => {
+      const dateKey = item.scrape_date;
+      const yearKey = `${dateKey}-${item.year}`;
+
+      if (!consensusByDate.has(dateKey)) {
+        consensusByDate.set(dateKey, []);
       }
-      consensusByDate.get(item.scrape_date)?.push(item);
+
+      // 같은 날짜+연도에 이미 데이터가 있으면 fnguide만 덮어쓰기
+      const existingItems = consensusByDate.get(dateKey)!;
+      const existingIndex = existingItems.findIndex(e => e.year === item.year);
+
+      if (existingIndex === -1) {
+        existingItems.push(item);
+      } else if (item.data_source === 'fnguide') {
+        // fnguide는 항상 덮어쓰기
+        existingItems[existingIndex] = item;
+      }
     });
 
     const priceByDate = new Map<string, any>();
@@ -184,22 +207,25 @@ function calculateInsights(data: any[], years: number[]) {
       const firstRevenue = recentRevenue[0];
       const lastRevenue = recentRevenue[recentRevenue.length - 1];
 
-      // 0으로 나누기 방지 및 비정상적인 값 체크
-      let changeRate = 0;
-      if (firstRevenue === 0) {
-        changeRate = lastRevenue === 0 ? 0 : (lastRevenue > 0 ? 10000 : -10000);
+      // 0 또는 비정상적으로 작은 값은 null 반환
+      if (firstRevenue < 1000000000) {  // 10억원 미만은 잘못된 데이터
+        stats.recent30Days[year] = {
+          revenue_change: null,
+          first: firstRevenue,
+          last: lastRevenue,
+          error: 'invalid_first_value'
+        };
       } else {
-        changeRate = ((lastRevenue - firstRevenue) / firstRevenue * 100);
-        // 비정상적으로 큰 값 방지 (±10000% 이상은 제한)
-        if (changeRate > 10000) changeRate = 10000;
-        if (changeRate < -10000) changeRate = -10000;
-      }
+        const changeRate = ((lastRevenue - firstRevenue) / firstRevenue * 100);
+        // 합리적인 범위 내 값만 반환 (±500% 이상은 이상치로 간주)
+        const validChangeRate = Math.abs(changeRate) <= 500 ? parseFloat(changeRate.toFixed(2)) : null;
 
-      stats.recent30Days[year] = {
-        revenue_change: parseFloat(changeRate.toFixed(2)),
-        first: firstRevenue,
-        last: lastRevenue,
-      };
+        stats.recent30Days[year] = {
+          revenue_change: validChangeRate,
+          first: firstRevenue,
+          last: lastRevenue,
+        };
+      }
     }
   });
 
@@ -209,26 +235,29 @@ function calculateInsights(data: any[], years: number[]) {
     const firstPrice = recentPrices[0];
     const lastPrice = recentPrices[recentPrices.length - 1];
 
-    // 0으로 나누기 방지 및 비정상적인 값 체크
-    let priceChangeRate = 0;
-    if (firstPrice === 0) {
-      priceChangeRate = lastPrice === 0 ? 0 : (lastPrice > 0 ? 10000 : -10000);
+    // 0 또는 비정상적으로 작은 값은 null 반환
+    if (firstPrice <= 0) {
+      stats.recent30Days.price_change = null;
     } else {
-      priceChangeRate = ((lastPrice - firstPrice) / firstPrice * 100);
-      // 비정상적으로 큰 값 방지 (±10000% 이상은 제한)
-      if (priceChangeRate > 10000) priceChangeRate = 10000;
-      if (priceChangeRate < -10000) priceChangeRate = -10000;
+      const priceChangeRate = ((lastPrice - firstPrice) / firstPrice * 100);
+      // 합리적인 범위 내 값만 반환 (±500% 이상은 이상치)
+      stats.recent30Days.price_change = Math.abs(priceChangeRate) <= 500
+        ? parseFloat(priceChangeRate.toFixed(2))
+        : null;
     }
-
-    stats.recent30Days.price_change = parseFloat(priceChangeRate.toFixed(2));
     stats.recent30Days.price_first = firstPrice;
     stats.recent30Days.price_last = lastPrice;
   }
 
   // 괴리율 계산 (컨센서스 변화 vs 주가 변화)
-  if (stats.recent30Days[2025] && stats.recent30Days.price_change !== undefined) {
-    const divergence = (stats.recent30Days[2025].revenue_change - stats.recent30Days.price_change).toFixed(2);
-    stats.recent30Days.divergence = parseFloat(divergence);
+  // 둘 다 유효한 값일 때만 계산
+  const revenueChange = stats.recent30Days[2025]?.revenue_change;
+  const priceChange = stats.recent30Days.price_change;
+
+  if (typeof revenueChange === 'number' && typeof priceChange === 'number') {
+    stats.recent30Days.divergence = parseFloat((revenueChange - priceChange).toFixed(2));
+  } else {
+    stats.recent30Days.divergence = null;
   }
 
   return stats;
