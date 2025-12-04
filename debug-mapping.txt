@@ -1,0 +1,42 @@
+﻿node.exe : (node:14856) [DEP0040] DeprecationWarning: The `punycode` modul
+e is deprecated. Please use a userland alternative instead.
+위치 C:\Program Files\nodejs\npx.ps1:29 문자:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:14856) [D...native ins 
+   tead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Connected to PostgreSQL
+
+PostgreSQL companies (first 10):
+  PG ID 1: 005930 (?쇱꽦?꾩옄)
+  PG ID 2: 000660 (SK?섏씠?됱뒪)
+  PG ID 3: 207940 (?쇱꽦諛붿씠?ㅻ줈吏곸뒪)
+  PG ID 4: 373220 (LG?먮꼫吏?붾（??
+  PG ID 5: 105560 (KB湲덉쑖)
+  PG ID 6: 012450 (?쒗솕?먯뼱濡쒖뒪?섏씠??
+  PG ID 7: 005380 (?꾨?李?
+  PG ID 8: 005935 (?쇱꽦?꾩옄??
+  PG ID 9: 000270 (湲곗븘)
+  PG ID 10: 329180 (HD?꾨?以묎났??
+
+Supabase companies (first 10):
+  SB ID 1: 005930 (?쇱꽦?꾩옄)
+  SB ID 2: 000660 (SK?섏씠?됱뒪)
+  SB ID 3: 207940 (?쇱꽦諛붿씠?ㅻ줈吏곸뒪)
+  SB ID 4: 373220 (LG?먮꼫吏?붾（??
+  SB ID 5: 105560 (KB湲덉쑖)
+  SB ID 6: 005380 (?꾨?李?
+  SB ID 7: 034020 (?먯궛?먮꼫鍮뚮━??
+  SB ID 8: 005935 (?쇱꽦?꾩옄??
+  SB ID 9: 035420 (NAVER)
+  SB ID 10: 000270 (湲곗븘)
+
+Matching test (?쇱꽦?꾩옄 005930):
+  PostgreSQL: { id: 1, code: '005930', name: '?쇱꽦?꾩옄' }
+  Supabase: { id: 1, code: '005930', name: '?쇱꽦?꾩옄' }
+
+Sample stock price from PostgreSQL:
+  Wed Jun 11 2025 00:00:00 GMT+0900 (??쒕?援??쒖???: 278530 (KODEX 200TR) - 13955??  Tue Jun 10 2025 00:00:00 GMT+0900 (??쒕?援??쒖???: 278530 (KODEX 200TR) - 13780??  Mon Jun 09 2025 00:00:00 GMT+0900 (??쒕?援??쒖???: 278530 (KODEX 200TR) - 13705??  Mon Dec 30 2024 00:00:00 GMT+0900 (??쒕?援??쒖???: 006040 (?숈썝?곗뾽) - 36950??  Fri Dec 27 2024 00:00:00 GMT+0900 (??쒕?援??쒖???: 006040 (?숈썝?곗뾽) - 39700??

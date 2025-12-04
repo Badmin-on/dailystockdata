@@ -1,0 +1,49 @@
+﻿=== 鍮꾧탳 ?좎쭨 ?곗씠???뺤씤 ===
+
+node.exe : (node:5062
+4) [DEP0040] Deprecat
+ionWarning: The `puny
+code` module is depre
+cated. Please use a u
+serland alternative i
+nstead.
+위치 C:\Program Files\n
+odejs\npx.ps1:29 문자:3
++   & $NODE_EXE $NPX_
+CLI_JS $args
++   ~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: ((node:5   
+ 0624) [D...nativ    
+e instead.:Strin    g
+) [], RemoteExc    ep
+tion
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+(Use `node --trace-de
+precation ...` to sho
+w where the warning w
+as created)
+珥?1媛쒖쓽 怨좎쑀 ?좎쭨 諛쒓껄
+
+理쒓렐 20媛??좎쭨:
+  1. 2025-12-03
+
+紐⑺몴 鍮꾧탳 ?좎쭨:
+  理쒖떊: 2025-12-03
+  ?꾩씪: N/A
+  1媛쒖썡 ??紐⑺몴: 2025-11-03
+  3媛쒖썡 ??紐⑺몴: 2025-09-04
+  1????紐⑺몴: 2024-12-03
+
+媛???ㅻ옒???곗씠?? 2025-12-03
+?곗씠??踰붿쐞: 0??(??0.0媛쒖썡)
+
+鍮꾧탳 媛???щ?:
+  ?꾩씪 鍮꾧탳: ??遺덇???  1媛쒖썡 鍮꾧탳: ??遺덇???(?곗씠??遺議?
+  3媛쒖썡 鍮꾧탳: ??遺덇???(?곗씠??遺議?
+  1??鍮꾧탳: ??遺덇???(?곗씠??遺議?

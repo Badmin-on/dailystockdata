@@ -1,76 +1,57 @@
-import { config } from 'dotenv';
-import { resolve } from 'path';
-config({ path: resolve(__dirname, '../.env.local') });
-
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || '';
+dotenv.config({ path: '.env.local' });
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase environment variables');
-  process.exit(1);
-}
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 async function checkAllDates() {
-  console.log('📅 Checking all snapshot dates in database...\n');
+  console.log('financial_data_extended 테이블의 모든 날짜 확인\n');
 
-  // Check consensus_metric_daily
-  const { data: metricDates } = await supabaseAdmin
-    .from('consensus_metric_daily')
-    .select('snapshot_date')
-    .order('snapshot_date', { ascending: false })
-    .limit(10);
-
-  console.log('📊 consensus_metric_daily - Recent dates:');
-  metricDates?.forEach(d => console.log(`  - ${d.snapshot_date}`));
-
-  const { count: metricCount } = await supabaseAdmin
-    .from('consensus_metric_daily')
-    .select('*', { count: 'exact' });
-  console.log(`  Total: ${metricCount} records\n`);
-
-  // Check consensus_diff_log
-  const { data: diffDates } = await supabaseAdmin
-    .from('consensus_diff_log')
-    .select('snapshot_date')
-    .order('snapshot_date', { ascending: false })
-    .limit(10);
-
-  console.log('📈 consensus_diff_log - Recent dates:');
-  diffDates?.forEach(d => console.log(`  - ${d.snapshot_date}`));
-
-  const { count: diffCount } = await supabaseAdmin
-    .from('consensus_diff_log')
-    .select('*', { count: 'exact' });
-  console.log(`  Total: ${diffCount} records\n`);
-
-  // Check financial_data_extended latest update
-  const { data: finData } = await supabaseAdmin
+  // 모든 고유 날짜 조회
+  const { data } = await supabase
     .from('financial_data_extended')
-    .select('year, updated_at')
-    .order('updated_at', { ascending: false })
-    .limit(1);
+    .select('scrape_date, data_source')
+    .order('scrape_date', { ascending: false });
 
-  if (finData && finData.length > 0) {
-    console.log('💰 financial_data_extended:');
-    console.log(`  Latest update: ${finData[0].updated_at}`);
-    console.log(`  Latest year: ${finData[0].year}\n`);
+  if (!data || data.length === 0) {
+    console.log('데이터가 없습니다!');
+    return;
   }
 
-  // Current KST date
-  const now = new Date();
-  const kstOffset = 9 * 60;
-  const kstTime = new Date(now.getTime() + (kstOffset - now.getTimezoneOffset()) * 60000);
-  const kstDate = kstTime.toISOString().split('T')[0];
-  console.log(`🕐 Current KST date: ${kstDate}`);
+  // 날짜별 그룹화
+  const dateMap = new Map<string, { fnguide: number, naver: number }>();
+
+  data.forEach(row => {
+    if (!dateMap.has(row.scrape_date)) {
+      dateMap.set(row.scrape_date, { fnguide: 0, naver: 0 });
+    }
+    const stats = dateMap.get(row.scrape_date)!;
+    if (row.data_source === 'fnguide') {
+      stats.fnguide++;
+    } else if (row.data_source === 'naver') {
+      stats.naver++;
+    }
+  });
+
+  const uniqueDates = Array.from(dateMap.keys()).sort().reverse();
+
+  console.log(`총 고유 날짜: ${uniqueDates.length}개`);
+  console.log(`총 레코드: ${data.length}개\n`);
+
+  console.log('날짜별 데이터 (최근 20개):');
+  uniqueDates.slice(0, 20).forEach((date, i) => {
+    const stats = dateMap.get(date)!;
+    console.log(`  ${i + 1}. ${date}: fnguide=${stats.fnguide}, naver=${stats.naver}, 합계=${stats.fnguide + stats.naver}`);
+  });
+
+  if (uniqueDates.length > 20) {
+    console.log(`\n  ... (총 ${uniqueDates.length}개 날짜)`);
+  }
 }
 
 checkAllDates().catch(console.error);

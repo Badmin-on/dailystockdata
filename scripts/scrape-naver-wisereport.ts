@@ -74,58 +74,45 @@ async function scrapeCompany(companyId: number, code: string) {
             if (field) {
                 $(tr).find('td').each((j, td) => {
                     if (j < years.length) {
-                        const year = years[j];
-                        if (!records[year]) records[year] = {
-                            year, revenue: null, operating_profit: null, net_income: null, eps: null, per: null, roe: null
-                        };
-
-                        const valStr = $(td).text().trim().replace(/,/g, '');
-                        const val = (valStr && valStr !== 'N/A' && valStr !== '-') ? parseFloat(valStr) : null;
-
-                        if (field === 'net_income') {
-                            if (title.includes('지배주주')) {
-                                records[year][field] = val;
-                            } else if (records[year][field] === null) {
-                                records[year][field] = val;
-                            }
-                        } else {
-                            records[year][field] = val;
-                        }
                     }
-                });
-            }
+                } else {
+                    records[year][field] = val;
+                }
+                    }
+        });
+    }
         });
 
-        console.error(`Prepared ${Object.keys(records).length} records.`);
+console.error(`Prepared ${Object.keys(records).length} records.`);
 
-        // 5. Save to DB
-        const upsertData = Object.values(records).map(r => ({
-            company_id: companyId,
-            year: r.year,
-            revenue: r.revenue,
-            operating_profit: r.operating_profit,
-            net_income: r.net_income,
-            eps: r.eps,
-            per: r.per,
-            roe: r.roe,
-            data_source: 'naver_wise',
-            scrape_date: new Date().toISOString().split('T')[0]
-        }));
+// 5. Save to DB
+const upsertData = Object.values(records).map(r => ({
+    company_id: companyId,
+    year: r.year,
+    revenue: r.revenue,
+    operating_profit: r.operating_profit,
+    net_income: r.net_income,
+    eps: r.eps,
+    per: r.per,
+    roe: r.roe,
+    data_source: 'naver_wise',
+    scrape_date: new Date().toISOString().split('T')[0]
+}));
 
-        if (upsertData.length > 0) {
-            const { error } = await supabaseAdmin
-                .from('financial_data_extended')
-                .upsert(upsertData, { onConflict: 'company_id,year,data_source' });
+if (upsertData.length > 0) {
+    const { error } = await supabaseAdmin
+        .from('financial_data_extended')
+        .upsert(upsertData, { onConflict: 'company_id,year,data_source' });
 
-            if (error) console.error(`❌ DB Error for ${code}:`, error.message);
-            else console.error(`✅ Saved ${upsertData.length} records for ${code}`);
-        } else {
-            console.error('⚠️ No data to save.');
-        }
+    if (error) console.error(`❌ DB Error for ${code}:`, error.message);
+    else console.error(`✅ Saved ${upsertData.length} records for ${code}`);
+} else {
+    console.error('⚠️ No data to save.');
+}
 
     } catch (error: any) {
-        console.error(`❌ Error processing ${code}:`, error.message);
-    }
+    console.error(`❌ Error processing ${code}:`, error.message);
+}
 }
 
 // Run for Samsung

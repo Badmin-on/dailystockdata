@@ -1,0 +1,7 @@
+# PostgreSQL Database Configuration for alexDB project
+# Database connection settings
+STOCK_USER_PASSWORD=513600
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=yoonstock
+DB_PORT=5432

@@ -1,0 +1,29 @@
+PostgreSQL connected
+
+daily_stock_prices columns:
+  id: bigint
+  company_id: bigint
+  date: date
+  close_price: integer
+  volume: bigint
+  change_rate: numeric
+
+Data stats:
+  Total: 354550
+  Dates: 1337
+  Range: Thu Oct 12 2000 00:00:00 GMT+0900 (대한민국 표준시) to Wed Dec 03 2025 00:00:00 GMT+0900 (대한민국 표준시)
+
+Sample row:
+  id = 42
+  company_id = 143
+  date = Wed Jun 11 2025 00:00:00 GMT+0900 (대한민국 표준시)
+  close_price = 13955
+  volume = 953615
+  change_rate = null
+
+
+companies columns:
+  id: integer
+  name: character varying
+  code: character varying
+  market: character varying
