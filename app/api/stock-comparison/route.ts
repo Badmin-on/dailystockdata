@@ -65,9 +65,22 @@ export async function GET(request: NextRequest) {
       query = query.eq('market', market);
     }
 
+    // 프론트엔드 정렬 키 -> DB 컬럼명 매핑
+    const sortColumnMap: Record<string, string> = {
+      'op_profit_growth_1year': 'op_profit_change_1y',
+      'revenue_growth_1year': 'revenue_change_1y',
+      'op_profit_growth_3month': 'op_profit_change_3m',
+      'revenue_growth_3month': 'revenue_change_3m',
+      'op_profit_growth_1month': 'op_profit_change_1m',
+      'revenue_growth_1month': 'revenue_change_1m',
+      'op_profit_growth_prev_day': 'op_profit_change_1d',
+      'revenue_growth_prev_day': 'revenue_change_1d',
+    };
+    const actualSortColumn = sortColumnMap[sortBy] || sortBy;
+
     // 정렬
     const ascending = sortOrder.toUpperCase() === 'ASC';
-    query = query.order(sortBy, { ascending, nullsFirst: false });
+    query = query.order(actualSortColumn, { ascending, nullsFirst: false });
 
     const { data: consensusData, error } = await query;
 
