@@ -4,6 +4,9 @@
  *
  * Calculates FVB/HGS/RRS metrics for all stocks and saves to DB
  * Run daily to update consensus metrics
+ * 
+ * [2024-12-06] Fixed: Uses ALL available data regardless of scrape_date
+ * Priority: fnguide > naver_wise > naver (for same date), newest date wins first
  */
 
 // Load environment variables
@@ -59,20 +62,15 @@ async function calculateConsensusBatch() {
   console.log(`📅 Current Year: ${currentYear}`);
 
   // Determine target years to fetch dynamically
-  // We want to support:
-  // 1. Current Year Growth: (Current-1) vs Current
-  // 2. Next Year Outlook: Current vs (Current+1)
-  // This ensures that when year changes (e.g. 2025 -> 2026), the logic automatically shifts.
   const yearsToFetch = [currentYear - 1, currentYear, currentYear + 1];
   console.log(`🎯 Target Years: ${yearsToFetch.join(', ')}`);
 
   console.log('🚀 Consensus Calculation Batch Started');
   console.log('═'.repeat(80));
 
-  // 1. Fetch all companies with financial data
-  console.log('\n📊 Step 1: Fetching financial data...');
+  // 1. Fetch ALL financial data regardless of scrape_date
+  console.log('\n📊 Step 1: Fetching ALL financial data...');
 
-  // Fetch in chunks to bypass 1000 row limit
   let allFinancialData: any[] = [];
   let from = 0;
   const chunkSize = 1000;
@@ -94,7 +92,7 @@ async function calculateConsensusBatch() {
           )
         `)
       .in('year', yearsToFetch)
-      .order('scrape_date', { ascending: true }) // Oldest first, so newer overwrites in map logic below? No, we handle prioritization manually.
+      .order('scrape_date', { ascending: false }) // Newest first
       .range(from, from + chunkSize - 1);
 
     if (error) {
@@ -116,7 +114,8 @@ async function calculateConsensusBatch() {
 
   console.log(`✅ Fetched ${financialData.length} financial records`);
 
-  // 2. Group by company
+  // 2. Group by company, keeping the MOST RECENT data for each year
+  // Priority: fnguide > naver_wise > naver (for same date), but newest date wins first
   console.log('\n📊 Step 2: Grouping by company...');
 
   const companyMap = new Map<number, CompanyFinancialData>();
@@ -138,12 +137,6 @@ async function calculateConsensusBatch() {
 
     const companyData = companyMap.get(companyId)!;
 
-    // We need to handle multiple records for the same year (e.g. fnguide vs naver_wise)
-    // We prioritize naver_wise.
-    // Logic: Check if we already have a record for this year.
-    // If yes, check source. If existing is fnguide and new is naver_wise, overwrite.
-    // If existing is naver_wise, keep it (unless new is also naver_wise and newer date).
-
     const existingIndex = companyData.data.findIndex(d => d.year === row.year);
 
     const newRecord = {
@@ -159,12 +152,19 @@ async function calculateConsensusBatch() {
 
       let shouldOverwrite = false;
 
-      // Priority: naver_wise > fnguide
-      if (newRecord.data_source === 'naver_wise' && existingRecord.data_source !== 'naver_wise') {
+      // Priority: Newer date wins, then source priority
+      if (newRecord.scrape_date > existingRecord.scrape_date) {
         shouldOverwrite = true;
-      } else if (newRecord.data_source === existingRecord.data_source) {
-        // Same source, pick newer scrape_date
-        if (newRecord.scrape_date > existingRecord.scrape_date) {
+      } else if (newRecord.scrape_date === existingRecord.scrape_date) {
+        // Same date, check source priority: fnguide > naver_wise > naver
+        const sourcePriority: Record<string, number> = {
+          'fnguide': 3,
+          'naver_wise': 2,
+          'naver': 1
+        };
+        const newPriority = sourcePriority[newRecord.data_source] || 0;
+        const existingPriority = sourcePriority[existingRecord.data_source] || 0;
+        if (newPriority > existingPriority) {
           shouldOverwrite = true;
         }
       }
@@ -178,6 +178,27 @@ async function calculateConsensusBatch() {
   });
 
   console.log(`✅ Grouped into ${companyMap.size} companies`);
+
+  // Debug: Check how many companies have required year pairs
+  let companiesWithY1Y2 = 0;
+  let companiesWithNextYear = 0;
+  const y1 = currentYear - 1;
+  const y2 = currentYear;
+  const y3 = currentYear + 1;
+
+  const companyValues = Array.from(companyMap.values());
+  for (let i = 0; i < companyValues.length; i++) {
+    const company = companyValues[i];
+    const hasY1 = company.data.some(d => d.year === y1 && d.eps !== null);
+    const hasY2 = company.data.some(d => d.year === y2 && d.eps !== null);
+    const hasY3 = company.data.some(d => d.year === y3 && d.eps !== null);
+
+    if (hasY1 && hasY2) companiesWithY1Y2++;
+    if (hasY2 && hasY3) companiesWithNextYear++;
+  }
+
+  console.log(`📊 Companies with ${y1}-${y2} pair + EPS: ${companiesWithY1Y2}`);
+  console.log(`📊 Companies with ${y2}-${y3} pair + EPS: ${companiesWithNextYear}`);
 
   // 3. Calculate metrics for each company
   console.log('\n📊 Step 3: Calculating consensus metrics...\n');
@@ -195,13 +216,18 @@ async function calculateConsensusBatch() {
     { y1: currentYear, y2: currentYear + 1 }  // Next Outlook
   ];
 
-  for (const [companyId, company] of companyMap.entries()) {
-    for (const pairConfig of pairsToCalculate) {
-      const { y1, y2 } = pairConfig;
+  const companyEntries = Array.from(companyMap.entries());
+  for (let i = 0; i < companyEntries.length; i++) {
+    const [companyId, company] = companyEntries[i];
+
+    for (let j = 0; j < pairsToCalculate.length; j++) {
+      const pairConfig = pairsToCalculate[j];
+      const pairY1 = pairConfig.y1;
+      const pairY2 = pairConfig.y2;
 
       // Find data for this pair
-      const dataY1 = company.data.find(d => d.year === y1);
-      const dataY2 = company.data.find(d => d.year === y2);
+      const dataY1 = company.data.find(d => d.year === pairY1);
+      const dataY2 = company.data.find(d => d.year === pairY2);
 
       if (!dataY1 || !dataY2) continue;
 
@@ -213,8 +239,8 @@ async function calculateConsensusBatch() {
       // Full calculation if PER is available
       if (dataY1.per !== null && dataY2.per !== null) {
         const pair: YearPair = {
-          target_y1: y1,
-          target_y2: y2,
+          target_y1: pairY1,
+          target_y2: pairY2,
           eps_y1: dataY1.eps,
           eps_y2: dataY2.eps,
           per_y1: dataY1.per,
@@ -259,8 +285,8 @@ async function calculateConsensusBatch() {
         company_id: company.company_id,
         ticker: company.ticker,
         snapshot_date: snapshotDate,
-        target_y1: y1,
-        target_y2: y2,
+        target_y1: pairY1,
+        target_y2: pairY2,
         eps_y1: result.eps_y1,
         eps_y2: result.eps_y2,
         per_y1: result.per_y1,
@@ -293,7 +319,7 @@ async function calculateConsensusBatch() {
       if (error) {
         console.error('❌ Error saving batch:', error);
       } else {
-        console.log(`  ✅ Saved batch ${i / 1000 + 1} (${chunk.length} records)`);
+        console.log(`  ✅ Saved batch ${Math.floor(i / 1000) + 1} (${chunk.length} records)`);
       }
     }
   }
