@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
         // 프론트엔드 호환성을 위한 플래그
         is_estimate: false,
         is_highlighted: false,
-        has_daily_surge: c.op_profit_change_1d !== null && parseFloat(c.op_profit_change_1d) >= 5,
+        has_daily_surge: c.op_profit_change_1d != null && Number(c.op_profit_change_1d) >= 5,
 
         // 전일 비교
         prev_day_revenue: c.prev_day_revenue,
