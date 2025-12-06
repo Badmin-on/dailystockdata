@@ -17,27 +17,8 @@ export async function GET(request: NextRequest) {
     const onlyWithData = searchParams.get('onlyWithData') === 'true';
     const debug = searchParams.get('debug') === 'true';
 
-    // 프론트엔드 정렬 키 -> DB 컬럼명 매핑
-    const sortColumnMap: Record<string, string> = {
-      // 1년 비교
-      'op_profit_growth_1year': 'op_profit_change_1y',
-      'revenue_growth_1year': 'revenue_change_1y',
-      // 3개월 비교
-      'op_profit_growth_3m': 'op_profit_change_3m',
-      'revenue_growth_3m': 'revenue_change_3m',
-      // 1개월 비교
-      'op_profit_growth_1m': 'op_profit_change_1m',
-      'revenue_growth_1m': 'revenue_change_1m',
-      // 전일 비교
-      'op_profit_growth_prev_day': 'op_profit_change_1d',
-      'revenue_growth_prev_day': 'revenue_change_1d',
-    };
-
-    // 매핑된 정렬 컬럼 사용 (매핑이 없으면 원본 사용)
-    const actualSortColumn = sortColumnMap[sortBy] || sortBy;
-
     console.log(`📊 Stock Comparison API v2 - Using mv_consensus_changes`);
-    console.log(`   Year: ${year}, Sort: ${sortBy} -> ${actualSortColumn} ${sortOrder}`);
+    console.log(`   Year: ${year}, Sort: ${sortBy} ${sortOrder}`);
 
     // mv_consensus_changes에서 데이터 조회
     let query = supabaseAdmin
@@ -86,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     // 정렬
     const ascending = sortOrder.toUpperCase() === 'ASC';
-    query = query.order(actualSortColumn, { ascending, nullsFirst: false });
+    query = query.order(sortBy, { ascending, nullsFirst: false });
 
     const { data: consensusData, error } = await query;
 
@@ -130,45 +111,40 @@ export async function GET(request: NextRequest) {
 
         // 현재 데이터
         current_revenue: c.current_revenue,
-        current_op_profit: c.current_op_profit,
-
-        // 프론트엔드 호환성을 위한 플래그
-        is_estimate: false,
-        is_highlighted: false,
-        has_daily_surge: c.op_profit_change_1d != null && Number(c.op_profit_change_1d) >= 5,
+        current_operating_profit: c.current_op_profit,
 
         // 전일 비교
         prev_day_revenue: c.prev_day_revenue,
         prev_day_operating_profit: c.prev_day_op_profit,
         revenue_growth_prev_day: c.revenue_change_1d,
-        op_profit_growth_prev_day: c.op_profit_change_1d,
+        operating_profit_growth_prev_day: c.op_profit_change_1d,
         prev_day_date: c.prev_day_date,
 
         // 1개월 비교
         one_month_revenue: c.one_month_revenue,
         one_month_operating_profit: c.one_month_op_profit,
-        revenue_growth_1month: c.revenue_change_1m,
-        op_profit_growth_1month: c.op_profit_change_1m,
-        onemonth_ago_date: c.one_month_date,
+        revenue_growth_1m: c.revenue_change_1m,
+        operating_profit_growth_1m: c.op_profit_change_1m,
+        one_month_date: c.one_month_date,
 
         // 3개월 비교
         three_month_revenue: c.three_months_revenue,
         three_month_operating_profit: c.three_months_op_profit,
-        revenue_growth_3month: c.revenue_change_3m,
-        op_profit_growth_3month: c.op_profit_change_3m,
-        threemonth_ago_date: c.three_months_date,
+        revenue_growth_3m: c.revenue_change_3m,
+        operating_profit_growth_3m: c.op_profit_change_3m,
+        three_month_date: c.three_months_date,
 
         // 1년 비교
         one_year_revenue: c.one_year_revenue,
         one_year_operating_profit: c.one_year_op_profit,
-        revenue_growth_1year: c.revenue_change_1y,
-        op_profit_growth_1year: c.op_profit_change_1y,
-        oneyear_ago_date: c.one_year_date,
+        revenue_growth_1y: c.revenue_change_1y,
+        operating_profit_growth_1y: c.op_profit_change_1y,
+        one_year_date: c.one_year_date,
 
         // 주가 데이터
         current_price: stock?.current_price || null,
-        ma120: stock?.ma_120 || null,
-        price_deviation: stock?.divergence_120 || null,
+        ma_120: stock?.ma_120 || null,
+        deviation_120: stock?.divergence_120 || null,
 
         // 메타데이터
         last_updated: c.current_date,
